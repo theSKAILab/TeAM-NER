@@ -253,7 +253,6 @@
         console.log("adding manual block ", start, end, this.currentClass);
         this.tm.addNewBlock(start, end, this.currentClass, true, false);
         this.addedTokensStack.push(start);
-        console.log(this.addedTokensStack)
         selection.empty();
       },
       onRemoveBlock(blockStart) {
