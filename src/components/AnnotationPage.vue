@@ -211,12 +211,10 @@
         } else {
           tokens = this.tokenizer.tokenize(this.currentSentence.text);
           spans = this.tokenizer.span_tokenize(this.currentSentence.text);
-          for (var tok in tokens) {console.log(tokens[tok]); if (tokens[tok] == '.') {tokens[tok-1]=tokens[tok-1]+".";tokens.splice(tok,1)}}
-
+          for (var tok in tokens) {if (tokens[tok] == '.') {tokens[tok-1]=tokens[tok-1]+".";tokens.splice(tok,1)}}
         }
   
         let combined = tokens.map((t, i) => [spans[i][0], spans[i][1], t]);
-  
         this.tm = new TokenManager(this.classes);
         this.tm.setTokensAndAnnotation(combined, this.currentAnnotation);
   
@@ -226,7 +224,6 @@
   
       selectTokens() {
         let selection = document.getSelection();
-  
         if (
           selection.anchorOffset === selection.focusOffset &&
           selection.anchorNode === selection.focusNode
@@ -256,6 +253,7 @@
         console.log("adding manual block ", start, end, this.currentClass);
         this.tm.addNewBlock(start, end, this.currentClass, true, false);
         this.addedTokensStack.push(start);
+        console.log(this.addedTokensStack)
         selection.empty();
       },
       onRemoveBlock(blockStart) {
