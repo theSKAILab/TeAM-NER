@@ -250,7 +250,7 @@
           selection.empty();
           return;
         }
-        console.log("adding manual block ", start, end, this.currentClass);
+        //console.log("adding manual block ", start, end, this.currentClass);
         this.tm.addNewBlock(start, end, this.currentClass, true, false);
         this.addedTokensStack.push(start);
         selection.empty();

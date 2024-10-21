@@ -253,6 +253,7 @@ export const mutations = {
       state.currentAnnotation = state.annotations[state.currentIndex] || {};
     } else {
       alert("You have completed all the sentences");
+      state.currentAnnotation = state.annotations[state.currentIndex] || {};
     }
   },
   previousSentence(state) {

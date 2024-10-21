@@ -27,16 +27,18 @@ class TokenManager {
     if (currentAnnotation != undefined) {
       // reset prevoius annotation state
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
+        console.log("ENTITY: ",currentAnnotation.entities[i]);
         var start = currentAnnotation.entities[i][1];
         var end = currentAnnotation.entities[i][2];
         var entityName = currentAnnotation.entities[i][3];
-        console.log("ENTITYNAME: ",entityName, currentAnnotation.entities[i]);
+        //console.log("ENTITYNAME: ",entityName, currentAnnotation.entities[i]);
         var entityClass = this.classes.find(c => c.name.toUpperCase() === entityName.toUpperCase());        
-        console.log("SETTOKENENTITYCLSAS: ",entityClass);
+        //console.log("SETTOKENENTITYCLSAS: ",entityClass);
         if (!entityClass) {
           entityClass = {"name": entityName};
         }
-        this.addNewBlock(start, end, entityClass, true);
+        //[b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]
+        this.addNewBlock(start, end, entityClass, true, false, undefined, entityName, currentAnnotation.entities[i][8], currentAnnotation.entities[i][9], currentAnnotation.entities[i][7], currentAnnotation.entities[i][5]);
       }
     }
   }
@@ -51,7 +53,7 @@ class TokenManager {
    * @param {Boolean} isHumanOpinion Seperate nlp vs human made annotation
 
    */
-  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, userHasToggled = true,isSymbolActive = 0) {
+  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status, annotationHistory, userHasToggled = true,isSymbolActive) {
     // Directly apply humanOpinion to the block structure
     let block = {
       type: "token-block",
@@ -70,6 +72,7 @@ class TokenManager {
       tokens: this.tokens.filter(token => token.start >= _start && token.end <= _end),
       backgroundColor: _class.color || null,
     };
+    console.log(block)
     let selectedTokens = [];
     let newTokens = [];
   
@@ -191,7 +194,8 @@ class TokenManager {
     for (let i = 0; i < this.tokens.length; i++) {
       if (this.tokens[i].type === "token-block") {
         let b = this.tokens[i];
-        console.log("export As annotations this is ", b);
+        //console.log("export As annotations this is ", b);
+        // format for anotations (TODO: BETTER FORMAT / DOCS)
         entities.push([b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]);
       }
     }

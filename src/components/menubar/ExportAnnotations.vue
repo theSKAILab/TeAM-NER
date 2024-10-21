@@ -34,19 +34,17 @@ export default {
           annotation.text,  // Text directly in the array
           {
             entities: annotation.entities.map(entity => {
-              let history = entity[9] || [];  // Ensure history is initialized
+              console.log(entity)
+              let history = entity[9] || [["Candidate", this.formatDate(new Date()), annotator, entity[3]]];  // Ensure history is initialized
 
-              const state = entity[5] === 2 ? "Rejected" :
-                            entity[5] === 1 ? "Accepted" : "Candidate";
-
-              const newHistoryEntry = [
-                state,
-                this.formatDate(new Date()),
-                annotator,
-                entity[3], // The class or label from the entity
-              ];
-
-              history.push(newHistoryEntry);
+              switch (entity[5]) {
+                case 2:
+                  history.push(["Rejected", this.formatDate(new Date()), annotator, entity[3]]);
+                  break;
+                case 1:
+                  history.push(["Accepted", this.formatDate(new Date()), annotator, entity[3]]);
+                  break;
+              }
 
               return [
                 entity[1], // start position
