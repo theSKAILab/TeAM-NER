@@ -51,7 +51,7 @@ class TokenManager {
    * @param {Boolean} isHumanOpinion Seperate nlp vs human made annotation
 
    */
-  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="suggested", annotationHistory, userHasToggled = true,isSymbolActive = 0) {
+  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, userHasToggled = true,isSymbolActive = 0) {
     // Directly apply humanOpinion to the block structure
     let block = {
       type: "token-block",
@@ -64,7 +64,7 @@ class TokenManager {
       initiallyNLP: initiallyNLP,
       userHasToggled: userHasToggled, // Ensure it's set for the new block
       isSymbolActive: isSymbolActive, // Ensure it's set for the new block
-      isSuggested: false,
+      isCandidate: false,
       isLoaded: isLoaded,
       status: status,
       tokens: this.tokens.filter(token => token.start >= _start && token.end <= _end),

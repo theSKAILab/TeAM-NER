@@ -37,7 +37,7 @@ export default {
               let history = entity[9] || [];  // Ensure history is initialized
 
               const state = entity[5] === 2 ? "Rejected" :
-                            entity[5] === 1 ? "Accepted" : "Suggested";
+                            entity[5] === 1 ? "Accepted" : "Candidate";
 
               const newHistoryEntry = [
                 state,
