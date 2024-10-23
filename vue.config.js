@@ -2,7 +2,6 @@ const webpack = require("webpack");
 
 module.exports = {
   publicPath: "/TeAM-NER/",
-  outputDir: "./docs/",
   // publicPath: process.env.NODE_ENV === "production" ? "/TeAM-NER/" : "/",
 
   pluginOptions: {
