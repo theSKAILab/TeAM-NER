@@ -75,13 +75,14 @@ class TokenManager {
   
     let selectionStart = _end < _start ? _end : _start;
     let selectionEnd = _end > _start ? _end : _start;
-  
     for (let i = 0; i < this.tokens.length; i++) {
       let currentToken = this.tokens[i];
-      if (currentToken.end < selectionStart) {
-        // token is before the selection
+      if (currentToken.start >= selectionEnd && selectedTokens.length) {
+        // token is first after the selection
+        appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
+        selectedTokens = []; // Ensure selected tokens are cleared after use
         newTokens.push(currentToken);
-      } else if (currentToken.end > selectionStart && currentToken.start < selectionEnd) {
+      } else if (currentToken.end >= selectionStart && currentToken.start < selectionEnd) {
         // token is inside the selection
         if (currentToken.type == "token-block") {
           if (currentToken.label.toUpperCase() == _class.name.toUpperCase()) {
@@ -113,22 +114,19 @@ class TokenManager {
         } else if (currentToken.type == "token") {
           selectedTokens.push(currentToken);
         }
-      } else if (currentToken.start >= selectionEnd && selectedTokens.length) {
-        // token is first after the selection
-        appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
-        selectedTokens = []; // Ensure selected tokens are cleared after use
-        newTokens.push(currentToken);
+
+        // add logic to add block to page if the end of it is the end of the tokens
       } else {
         newTokens.push(currentToken);
       }
     }
-  
-    // Append block at the end if there are remaining selected tokens
+
+    
     if (selectedTokens.length) {
-      newTokens.push(block);
-      appendNewBlock(selectedTokens, _class, newTokens, true); // Append remaining selected tokens with updated attributes
+      appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
+      selectedTokens = []; // Ensure selected tokens are cleared after use
+      //newTokens.push(currentToken);
     }
-  
     // Update the tokens array with new tokens
     this.tokens = newTokens;
     function appendNewBlock(tokens, _class, tokensArray, updateAttributes = false) {

@@ -383,6 +383,7 @@ determineSymbolState(status) {
       } else {
         tokens = this.tokenizer.tokenize(this.currentSentence.text);
         spans = this.tokenizer.span_tokenize(this.currentSentence.text);
+        for (var tok in tokens) {if (tokens[tok] == '.') {tokens[tok-1]=tokens[tok-1]+".";tokens.splice(tok,1)}}
       }
 
       let combined = tokens.map((t, i) => [spans[i][0], spans[i][1], t]);
