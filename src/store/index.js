@@ -26,9 +26,9 @@ const niceColors = [
 
 export const mutations = {
   setCurrentPage(state, page) {
-    // console.log("From index.js, changing currentpage to", page)
+    // ////console.log("From index.js, changing currentpage to", page)
     state.currentPage = page;
-    // console.log("From index.js, current page is now", state.currentPage)
+    // ////console.log("From index.js, current page is now", state.currentPage)
   },
   addToUndoStack(state, { undoAction, actionDescription }) {
     state.undoStack.push({ undoAction, actionDescription });
@@ -44,7 +44,7 @@ export const mutations = {
     if (state.undoStack.length > 0) {
       const lastAction = state.undoStack.pop();
       lastAction.undoAction();
-      console.log(`Undid action: ${lastAction.actionDescription}`);
+      ////console.log(`Undid action: ${lastAction.actionDescription}`);
     } else {
       console.warn("Undo stack is empty.");
     }
@@ -75,7 +75,36 @@ export const mutations = {
     state.currentClass = state.classes[0];
     LocalStorage.set("tags", state.classes);
   },
+  updateAnnotationHistory(state,payload) {
+    let annotationHistory = [];
+    for (var i in state.annotations) {
+      var annotationEntities = state.annotations[i].entities;
+      ////console.log(annotationEntities)
+      annotationEntities.forEach(entity => {
+        console.log(entity)
+        if (entity.length >= 3) {
+            ////console.log("help")
+            const start = entity[1];
+            const end = entity[2];
+            const history = entity[9]; // This will store all blocks as you wanted
+            const recentHistory = history? history[history.length - 1] : null; // This now assigns only the last block to 'type'
+            const ogtype = history? history[0][0] : null;
+            const label = entity[3];
+            const name = entity[0];
+            const status = entity[8];
+            var ogNLP = false
+            if(ogtype && ogtype[2] === 'nlp') ogNLP = true
   
+            ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
+            annotationHistory.push([label, start, end, recentHistory, name, status, ogNLP, history]);
+        }
+  
+    });
+    }
+
+  state.annotationHistory = annotationHistory;
+  ////console.log(annotationHistory)
+  },
   setInputSentences(state, payload) {
     try {
       let jsonData;
@@ -143,18 +172,18 @@ export const mutations = {
               const label = entity[2];
               const name = type[0][3];
               const status = type[0][4];
-              console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
+              ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
               annotationHistory.push([label, start, end, type, name, status]);
               const textSnippet = annotationText.slice(start, end);
               const textIndices = [start - 1, start - 2]; // Adjust indices as needed
   
-              console.log("THIS CONSOLE.LOG", sstate, label, textSnippet, textIndices);
+              ////console.log("THIS CONSOLE.LOG", sstate, label, textSnippet, textIndices);
             }
         }); */
-          console.log("help")
+          ////console.log("help")
           annotationEntities.entities.forEach(entity => {
               if (entity.length >= 3) {
-                  console.log("help")
+                  ////console.log("help")
                   const start = entity[0];
                   const end = entity[1];
                   const types = entity[2]; // This will store all blocks as you wanted
@@ -166,15 +195,15 @@ export const mutations = {
                   var ogNLP = false
                   if(ogtype[2] === 'nlp') ogNLP = true
       
-                  console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
+                  ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
                   annotationHistory.push([label, start, end, type, name, status, ogNLP, types]);
     
-                  console.log("Loaded annotation history:", types);
+                  ////console.log("Loaded annotation history:", types);
               }
       
           });
         state.annotationHistory = annotationHistory;
-        console.log("Updated state.annotationHistory:", state.annotationHistory);
+        ////console.log("Updated state.annotationHistory:", state.annotationHistory);
       
 
       return { id: i, text: annotationText };
@@ -196,7 +225,7 @@ export const mutations = {
   
     // If the class already exists, return
     if (existingClass) {
-      console.log('Class already exists, returning.');
+      ////console.log('Class already exists, returning.');
       return;
     }
   
@@ -215,7 +244,7 @@ export const mutations = {
       // If this is the first class, set it as the currentClass
       if (state.classes.length === 1) {
         state.currentClass = state.classes[0];
-        console.log('Updated currentClass:', state.currentClass);
+        ////console.log('Updated currentClass:', state.currentClass);
       }
     }
   },  
@@ -230,6 +259,7 @@ export const mutations = {
     state.currentClass = state.classes[payload];
   },
   addAnnotation(state, payload) {
+    ////console.log(payload)
     state.annotations[state.currentIndex] = payload;
     state.currentAnnotation = payload;
   },

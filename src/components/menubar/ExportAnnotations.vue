@@ -19,7 +19,7 @@ export default {
       if (annotator) {
         this.generateJSONExport(annotator);
       } else {
-        console.log('Export cancelled or name not provided.');
+        ////console.log('Export cancelled or name not provided.');
       }
     },
 
@@ -46,7 +46,10 @@ export default {
                 entity[3], // The class or label from the entity
               ];
 
-              history.push(newHistoryEntry);
+              // Fixes duplicate entries in history (only add if no history OR state changes)
+              if ((state == "Candidate" && history.length == 0) || (history[history.length-1][0] != state))  {
+                history.push(newHistoryEntry); // add to file history
+              }
 
               return [
                 entity[1], // start position
@@ -61,7 +64,7 @@ export default {
       const jsonStr = JSON.stringify(output, null, 2); // Pretty print JSON
       try {
         await exportFile(jsonStr, `${annotator}-annotations.json`);
-        console.log("Export successful");
+        ////console.log("Export successful");
       } catch (error) {
         console.error("Export failed:", error);
       }

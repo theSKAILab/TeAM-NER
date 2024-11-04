@@ -143,7 +143,7 @@
         event.stopPropagation()
       },
       undo() {
-        console.log("Undo Stack:", this.addedTokensStack);
+        //console.log("Undo Stack:", this.addedTokensStack);
       },
       /*
       // Load history of annotations from input file 
@@ -158,7 +158,7 @@
             const _class = this.classes.find(cls => cls.name === labelName);
             if (_class) {
               // Pass humanOpinion to the addNewBlock method of TokenManager
-              console.log("THE OPINION IS HUMAN? ", humanOpinion)
+              //console.log("THE OPINION IS HUMAN? ", humanOpinion)
               this.tm.addNewBlock(start, end, _class, humanOpinion);
             } else {
               console.warn(`Label "${labelName}" not found in classes.`);
@@ -239,7 +239,7 @@
           let offsetEnd = parseInt(rangeEnd.endContainer.parentElement.id.replace("t", ""));
           end = offsetEnd + rangeEnd.endOffset;
         } catch {
-          console.log("selected text were not tokens");
+          //console.log("selected text were not tokens");
           return;
         }
   
@@ -250,7 +250,7 @@
           selection.empty();
           return;
         }
-        console.log("adding manual block ", start, end, this.currentClass);
+        //console.log("adding manual block ", start, end, this.currentClass);
         this.tm.addNewBlock(start, end, this.currentClass, true, false);
         this.addedTokensStack.push(start);
         selection.empty();
