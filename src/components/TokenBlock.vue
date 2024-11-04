@@ -64,7 +64,7 @@ export default {
   data() {
     return {
       userHasToggled: false,
-      suggestedState: false,
+      candidateStatus: false,
       isReviewed: false,
     };
   },
@@ -72,7 +72,7 @@ export default {
     ...mapState(["currentPage"]),
     symbolClass() {
       switch (this.isSymbolActive) {
-        case 0: return "fas fa-hourglass-start fa-lg"; // Suggested - Hourglass implies waiting or potential
+        case 0: return "fas fa-hourglass-start fa-lg"; // Candidate - Hourglass implies waiting or potential
         case 1: return "fas fa-thumbs-up fa-lg"; //accepted
         case 2: return "fas fa-skull-crossbones fa-lg"; //rejected
         default: return "fas fa-question-circle fa-lg";

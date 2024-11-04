@@ -181,7 +181,7 @@ export default {
 
       console.log("Updated symbol state and user toggled status:", tokenStart, newSymbolState, userHasToggled);
     },
-    onAddBlock(start, end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status="suggested", annotationHistory, userHasToggled = false, isSymbolActive = 0) {
+    onAddBlock(start, end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status="candidate", annotationHistory, userHasToggled = false, isSymbolActive = 0) {
       console.log("Adding block:", start, end, _class);  // Confirm
       this.recordAction({
             type: 'addBlock',
@@ -363,8 +363,8 @@ determineSymbolState(status) {
   switch (status) {
     case "Accepted": return 1;
     case "Rejected": return 2;
-    case "Suggested": return 0;
-    default: return 0; // Default to suggested if unrecognized status
+    case "Candidate": return 0;
+    default: return 0; // Default to candidate if unrecognized status
   }
 },
 
@@ -424,7 +424,7 @@ determineSymbolState(status) {
         return;
       }
       console.log("adding manual block ", start, end, this.currentClass);
-      this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "Suggested", null, true);
+      this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "candidate", null, true);
       this.addedTokensStack.push(start);
       this.recordAction({
         type: 'addBlock',
