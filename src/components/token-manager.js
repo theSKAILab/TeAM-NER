@@ -75,6 +75,7 @@ class TokenManager {
   
     let selectionStart = _end < _start ? _end : _start;
     let selectionEnd = _end > _start ? _end : _start;
+    
     for (let i = 0; i < this.tokens.length; i++) {
       let currentToken = this.tokens[i];
       if (currentToken.start >= selectionEnd && selectedTokens.length) {
@@ -85,32 +86,9 @@ class TokenManager {
       } else if (currentToken.end >= selectionStart && currentToken.start < selectionEnd) {
         // token is inside the selection
         if (currentToken.type == "token-block") {
-          if (currentToken.label.toUpperCase() == _class.name.toUpperCase()) {
-            // tokens are from the same class
-            selectedTokens.push(...currentToken.tokens);
-          } else {
-            // tokens are from different class
-            let tokensBeforeSelection = [];
-            let tokensAfterSelection = [];
-            let oldTokens = currentToken.tokens;
-            for (let j = 0; j < oldTokens.length; j++) {
-              let oldToken = oldTokens[j];
-              if (oldToken.end <= selectionStart) {
-                tokensBeforeSelection.push(oldToken);
-              } else if (oldToken.end > selectionStart && oldToken.start < selectionEnd) {
-                selectedTokens.push(oldToken);
-              } else if (oldToken.start >= selectionEnd) {
-                tokensAfterSelection.push(oldToken);
-              }
-            }
-  
-            // Append new blocks with necessary attributes for before and after the selection
-            appendNewBlock(tokensBeforeSelection, currentToken, newTokens);
-            appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
-            appendNewBlock(tokensAfterSelection, currentToken, newTokens);
-  
-            selectedTokens = []; // Reset selectedTokens for potential next use
-          }
+          this.removeBlock(currentToken.start);
+          i--
+      //    selectionEnd-=1
         } else if (currentToken.type == "token") {
           selectedTokens.push(currentToken);
         }
