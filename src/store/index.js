@@ -179,9 +179,9 @@ export const mutations = {
 
       return { id: i, text: annotationText };
     });
-  
-      state.inputSentences = processedTexts;
+
       state.originalText = processedTexts.map(item => item.text).join(state.separator);
+      state.inputSentences =  state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
   
       if (jsonData.classes && Array.isArray(jsonData.classes)) {
         mutations.loadClasses(state, jsonData.classes);
@@ -239,8 +239,7 @@ export const mutations = {
   },
   setSeparator(state, payload) {
     state.separator = payload;
-    const sentences = state.originalText.split(state.separator);
-    state.inputSentences = sentences.map((s, i) => ({ id: i, text: s }));
+    state.inputSentences =  state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
   },
   setAnnotationPrecision(state, payload) {
     state.annotationPrecision = payload;
