@@ -19,7 +19,7 @@ export default {
       if (annotator) {
         this.generateJSONExport(annotator);
       } else {
-        ////console.log('Export cancelled or name not provided.');
+        console.log('Export cancelled or name not provided.');
       }
     },
 
@@ -33,7 +33,7 @@ export default {
         annotations: this.annotations.map(annotation => [
           annotation.text,  // Text directly in the array
           {
-            entities: annotation.entities.map(entity => {
+            entities: annotation.entities.length? annotation.entities.map(entity => {
               let history = entity[9] || [];  // Ensure history is initialized
 
               const state = entity[5] === 2 ? "Rejected" :
@@ -56,7 +56,7 @@ export default {
                 entity[2], // end position
                 history.map(h => [h[0], h[1], h[2], h[3]]) // history array
               ];
-            })
+            }): []
           }
         ])
       };

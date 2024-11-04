@@ -374,7 +374,6 @@ determineSymbolState(status) {
     tokenizeCurrentSentence() {
       this.currentSentence = this.inputSentences[this.currentIndex];
       this.currentAnnotation = this.annotations[this.currentIndex];
-
       let tokens, spans;
 
       if (this.$store.state.annotationPrecision == "char") {
