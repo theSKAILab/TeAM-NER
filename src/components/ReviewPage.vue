@@ -148,7 +148,7 @@ export default {
       event.stopPropagation()
     },
     recordAction(action) {
-      console.log("Recording action:", action); // This will log the action being recorded
+      ////console.log("Recording action:", action); // This will log the action being recorded
       this.undoStack.push(action);
       // Sort the undo stack by the timestamp to ensure the latest action is on top
       this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
@@ -164,9 +164,13 @@ export default {
       const oldUserHasToggled = token.userHasToggled;
 
       // Update the token's state and toggled status
-      this.tm.updateSymbolState(tokenStart, newSymbolState);
-      token.userHasToggled = userHasToggled; // Ensure this property exists and is settable
+     this.tm.updateSymbolState(tokenStart, newSymbolState);
+     const cases = ["Candidate", "Accepted", "Rejected"];
+     token.status = cases[newSymbolState];
+     token.userHasToggled = userHasToggled; // Ensure this property exists and is settable
 
+
+      // for undo stack
       this.recordAction({
         type: 'symbolUpdate',
         details: {
@@ -179,10 +183,9 @@ export default {
         }
       });
 
-      console.log("Updated symbol state and user toggled status:", tokenStart, newSymbolState, userHasToggled);
     },
     onAddBlock(start, end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status="candidate", annotationHistory, userHasToggled = false, isSymbolActive = 0) {
-      console.log("Adding block:", start, end, _class);  // Confirm
+      ////console.log("Adding block:", start, end, _class);  // Confirm
       this.recordAction({
             type: 'addBlock',
             details: {
@@ -235,7 +238,7 @@ export default {
                 timestamp: Date.now()
             }
         });
-        console.log("Removing block with details:", blockDetails);  // Logging all block details
+        ////console.log("Removing block with details:", blockDetails);  // Logging all block details
         this.tm.removeBlock(tokenStart);
     },
 
@@ -245,7 +248,7 @@ export default {
     undo() {
         if (this.undoStack.length > 0) {
             const lastAction = this.undoStack.pop(); // Get the most recent action
-            console.log("LAST ACTION BEFORE UNDO ",lastAction)
+            ////console.log("LAST ACTION BEFORE UNDO ",lastAction)
             switch (lastAction.type) {
               case 'symbolUpdate':
                 this.revertSymbolUpdate(lastAction.details);
@@ -257,10 +260,10 @@ export default {
                 this.revertAddBlock(lastAction.details);
                 break;
               default:
-                console.log("Unhandled action type:", lastAction.type);
+                ////console.log("Unhandled action type:", lastAction.type);
             }
         } else {
-            console.log("Undo Stack is empty");
+            ////console.log("Undo Stack is empty");
         }
     },
     revertSymbolUpdate(details) {
@@ -271,7 +274,7 @@ export default {
       if (token) {
         token.userHasToggled = details.oldUserHasToggled;
       }
-      console.log("Reverted symbol state and user toggled status for token:", details.tokenStart);
+      ////console.log("Reverted symbol state and user toggled status for token:", details.tokenStart);
     },
     revertBlockAdd(details) {
       // Assuming a method to remove a block if added inappropriately
@@ -279,7 +282,7 @@ export default {
     },
     revertBlockRemove(details) {
         if (details && details.blockDetails) {
-            console.log("Reverting with class details:", details.blockDetails._class);
+            ////console.log("Reverting with class details:", details.blockDetails._class);
             if (!details.blockDetails._class) {
                 console.error('Class details are missing');
                 return;
@@ -317,7 +320,7 @@ export default {
           const _class = this.classes.find(cls => cls.name === labelName);
           if (_class) {
             // Pass humanOpinion to the addNewBlock method of TokenManager
-            console.log("THE OPINION IS HUMAN? ", humanOpinion)
+            ////console.log("THE OPINION IS HUMAN? ", humanOpinion)
             this.tm.addNewBlock(start, end, _class, humanOpinion);
           } else {
             console.warn(`Label "${labelName}" not found in classes.`);
@@ -336,7 +339,7 @@ export default {
         const initiallyNLP = ogNLP;
         const _class = this.classes.find(cls => cls.name === labelName);
         const isSymbolActive = this.determineSymbolState(status);
-        console.log("Added block with symbol ", isSymbolActive);
+        ////console.log("Added block with symbol ", isSymbolActive);
 
         if (_class) {
             // Determine the most recent status for isSymbolActive
@@ -412,7 +415,7 @@ determineSymbolState(status) {
         let offsetEnd = parseInt(rangeEnd.endContainer.parentElement.id.replace("t", ""));
         end = offsetEnd + rangeEnd.endOffset;
       } catch {
-        console.log("selected text were not tokens");
+        ////console.log("selected text were not tokens");
         return;
       }
 
@@ -423,7 +426,7 @@ determineSymbolState(status) {
         selection.empty();
         return;
       }
-      console.log("adding manual block ", start, end, this.currentClass);
+      ////console.log("adding manual block ", start, end, this.currentClass);
       this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "candidate", null, true);
       this.addedTokensStack.push(start);
       this.recordAction({
@@ -470,6 +473,7 @@ determineSymbolState(status) {
         text: this.currentSentence.text,
         entities: this.tm.exportAsAnnotation(),
       });
+      this.$store.commit("updateAnnotationHistory")
       this.nextSentence();
       this.tokenizeCurrentSentence();
     },

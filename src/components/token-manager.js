@@ -30,9 +30,7 @@ class TokenManager {
         var start = currentAnnotation.entities[i][1];
         var end = currentAnnotation.entities[i][2];
         var entityName = currentAnnotation.entities[i][3];
-        console.log("ENTITYNAME: ",entityName, currentAnnotation.entities[i]);
         var entityClass = this.classes.find(c => c.name.toUpperCase() === entityName.toUpperCase());        
-        console.log("SETTOKENENTITYCLSAS: ",entityClass);
         if (!entityClass) {
           entityClass = {"name": entityName};
         }
@@ -171,10 +169,8 @@ class TokenManager {
 
   updateSymbolState(tokenStart, newSymbolState) {
     const tokenBlock = this.tokens.find(token => token.type === 'token-block' && token.start === tokenStart);
-    if (tokenBlock) {
-      tokenBlock.isSymbolActive = newSymbolState;
-      tokenBlock.userHasToggled = true; // Update based on user interaction
-    }
+    tokenBlock.isSymbolActive = newSymbolState;
+    tokenBlock.userHasToggled = true; // Update based on user interaction
   }
   /**
    * Exports the tokens and the token blocks as annotations
@@ -191,7 +187,6 @@ class TokenManager {
     for (let i = 0; i < this.tokens.length; i++) {
       if (this.tokens[i].type === "token-block") {
         let b = this.tokens[i];
-        console.log("export As annotations this is ", b);
         entities.push([b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]);
       }
     }
@@ -206,7 +201,7 @@ class TokenManager {
         return token;
       }
     }
-    console.log("Error, Unable to get block by start in token-manager.js");
+    ////console.log("Error, Unable to get block by start in token-manager.js");
     return null;
   }  
 }
