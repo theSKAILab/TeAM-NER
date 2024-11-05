@@ -1,28 +1,6 @@
 import { LocalStorage } from "quasar";
 
-const niceColors = [
-  "red-11",
-  "blue-11",
-  "light-green-11",
-  "deep-orange-11",
-  "pink-11",
-  "light-blue-11",
-  "lime-11",
-  "brown-11",
-  "purple-11",
-  "cyan-11",
-  "yellow-11",
-  "grey-11",
-  "deep-purple-11",
-  "teal-11",
-  "amber-11",
-  "blue-grey-11",
-  "indigo-11",
-  "green-11",
-  "orange-11",
-];
-
-
+const niceColors = ["red-11", "blue-11", "light-green-11", "deep-orange-11", "pink-11", "light-blue-11", "lime-11", "brown-11", "purple-11", "cyan-11", "yellow-11", "grey-11", "deep-purple-11", "teal-11", "amber-11", "blue-grey-11", "indigo-11", "green-11", "orange-11"];
 
 export const mutations = {
   setCurrentPage(state, page) {
@@ -35,7 +13,7 @@ export const mutations = {
   },
   undoAction(state, action) {
     // This mutation will dynamically call other mutations based on action.type and action.payload
-    if(action && typeof action.type === 'string' && typeof this._mutations[action.type] === 'function') {
+    if (action && typeof action.type === "string" && typeof this._mutations[action.type] === "function") {
       this._mutations[action.type][0](state, action.payload);
     }
   },
@@ -49,7 +27,7 @@ export const mutations = {
       console.warn("Undo stack is empty.");
     }
   },
-  
+
   // Mutation to clear the undo stack
   clearUndoStack(state) {
     state.undoStack = [];
@@ -59,15 +37,7 @@ export const mutations = {
     if (!Array.isArray(payload)) {
       throw new Error("loadClasses: payload must be an array");
     }
-    let isValid = payload.reduce(
-      (acc, curr) =>
-        acc &&
-        typeof curr === "object" &&
-        "id" in curr &&
-        "name" in curr &&
-        "color" in curr,
-      true
-    );
+    let isValid = payload.reduce((acc, curr) => acc && typeof curr === "object" && "id" in curr && "name" in curr && "color" in curr, true);
     if (!isValid) {
       throw new Error("loadClasses: payload has invalid schema");
     }
@@ -75,40 +45,39 @@ export const mutations = {
     state.currentClass = state.classes[0];
     LocalStorage.set("tags", state.classes);
   },
-  updateAnnotationHistory(state,payload) {
+  updateAnnotationHistory(state, payload) {
     let annotationHistory = [];
-    for (var i in state.annotations) {
-      var annotationEntities = state.annotations[i].entities;
-      ////console.log(annotationEntities)
-      annotationEntities.forEach(entity => {
-        console.log(entity)
+    console.log(state.annotations.entities)
+    if (state.annotations.entities) {
+      var annotationEntities = state.annotations.entities;
+      annotationEntities.forEach((entity) => {
+        console.log(entity);
         if (entity.length >= 3) {
-            ////console.log("help")
-            const start = entity[1];
-            const end = entity[2];
-            const history = entity[9]; // This will store all blocks as you wanted
-            const recentHistory = history? history[history.length - 1] : null; // This now assigns only the last block to 'type'
-            const ogtype = history? history[0][0] : null;
-            const label = entity[3];
-            const name = entity[0];
-            const status = entity[8];
-            var ogNLP = false
-            if(ogtype && ogtype[2] === 'nlp') ogNLP = true
-  
-            ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
-            annotationHistory.push([label, start, end, recentHistory, name, status, ogNLP, history]);
+          ////console.log("help")
+          const start = entity[1];
+          const end = entity[2];
+          const history = entity[9]; // This will store all blocks as you wanted
+          const recentHistory = history ? history[history.length - 1] : null; // This now assigns only the last block to 'type'
+          const ogtype = history ? history[0][0] : null;
+          const label = entity[3];
+          const name = entity[0];
+          const status = entity[8];
+          var ogNLP = false;
+          if (ogtype && ogtype[2] === "nlp") ogNLP = true;
+
+          ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
+          annotationHistory.push([label, start, end, recentHistory, name, status, ogNLP, history]);
         }
-  
-    });
+      });
     }
 
-  state.annotationHistory[state.currentIndex] = annotationHistory;
-  ////console.log(annotationHistory)
+    state.annotationHistory[state.currentIndex] = annotationHistory;
+    ////console.log(annotationHistory)
   },
   setInputSentences(state, payload) {
     try {
       let jsonData;
-      if (typeof payload === 'string') {
+      if (typeof payload === "string") {
         // Check if the payload is a JSON string
         try {
           jsonData = JSON.parse(payload);
@@ -117,7 +86,7 @@ export const mutations = {
           // If JSON parsing fails, assume it's a text file and proceed to read its content
           jsonData = {
             annotations: [[payload, { entities: [] }]],
-            classes: [] // You may need to provide some default values here based on your needs
+            classes: [], // You may need to provide some default values here based on your needs
           };
         }
       } else if (payload instanceof File) {
@@ -128,28 +97,28 @@ export const mutations = {
             const fileContent = event.target.result;
             jsonData = {
               annotations: [[fileContent, { entities: [] }]],
-              classes: [] // You may need to provide some default values here based on your needs
+              classes: [], // You may need to provide some default values here based on your needs
             };
-  
+
             // Proceed with the JSON data processing
             processJsonData(jsonData);
           } catch (error) {
             console.error(`Error processing text file: ${error.message}`);
           }
         };
-  
+
         fileReader.readAsText(payload);
         return;
       } else {
         throw new Error("Invalid payload type");
       }
-  
+
       // Continue with the JSON data processing
       processJsonData(jsonData);
     } catch (error) {
       console.error(`Error processing payload: ${error.message}`);
     }
-  
+
     function processJsonData(jsonData) {
       /*
       Function to process data in input entities section and map to token metadata
@@ -157,78 +126,54 @@ export const mutations = {
       as the information which gets loaded into review page on enter
       */
       const processedTexts = jsonData.annotations.map(([annotationText, annotationEntities], i) => {
-        
-        // Store the history of annotations to export to review page 
+        // Store the history of annotations to export to review page
         let annotationHistory = [];
-        // Set the current class for the preceding two indices of each entity
-        /* THIS IS FOR THEIR OLD FILE STRUCTURE 
-        if (annotationClassIds.length > 0) {
-          annotationEntities.entities.forEach(entity => {
-            if (entity.length >= 3) {
-              const start = entity[0];
-              const end = entity[1];
-              // type = the block of information that contains the name, date label etc..
-              const type = entity[3];
-              const label = entity[2];
-              const name = type[0][3];
-              const status = type[0][4];
-              ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
-              annotationHistory.push([label, start, end, type, name, status]);
-              const textSnippet = annotationText.slice(start, end);
-              const textIndices = [start - 1, start - 2]; // Adjust indices as needed
-  
-              ////console.log("THIS CONSOLE.LOG", sstate, label, textSnippet, textIndices);
-            }
-        }); */
-          ////console.log("help")
-          annotationEntities.entities.forEach(entity => {
-              if (entity.length >= 3) {
-                  ////console.log("help")
-                  const start = entity[0];
-                  const end = entity[1];
-                  const types = entity[2]; // This will store all blocks as you wanted
-                  const type = types[types.length - 1]; // This now assigns only the last block to 'type'
-                  const ogtype = types[0];
-                  const label = type[3];
-                  const name = type[2];
-                  const status = type[0];
-                  var ogNLP = false
-                  if(ogtype[2] === 'nlp') ogNLP = true
-      
-                  ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
-                  annotationHistory.push([label, start, end, type, name, status, ogNLP, types]);
-    
-                  ////console.log("Loaded annotation history:", types);
-              }
-      
-          });
-        state.annotationHistory[i] = annotationHistory;
-        ////console.log("Updated state.annotationHistory:", state.annotationHistory);
-      
+        ////console.log("help")
+        annotationEntities.entities.forEach((entity) => {
+          if (entity.length >= 3) {
+            ////console.log("help")
+            const start = entity[0];
+            const end = entity[1];
+            const types = entity[2]; // This will store all blocks as you wanted
+            const type = types[types.length - 1]; // This now assigns only the last block to 'type'
+            const ogtype = types[0];
+            const label = type[3];
+            const name = type[2];
+            const status = type[0];
+            var ogNLP = false;
+            if (ogtype[2] === "nlp") ogNLP = true;
 
-      return { id: i, text: annotationText };
-    });
-      console.log(state.annotationHistory)
-      state.originalText = processedTexts.map(item => item.text).join(state.separator);
-      state.inputSentences =  state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
-  
+            ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
+            annotationHistory.push([label, start, end, type, name, status, ogNLP, types]);
+
+            ////console.log("Loaded annotation history:", types);
+          }
+        });
+        if (annotationEntities.entities.length) state.annotationHistory[i] = annotationHistory;
+        ////console.log("Updated state.annotationHistory:", state.annotationHistory);
+
+        return { id: i, text: annotationText };
+      });
+      console.log(state.annotationHistory);
+      state.originalText = processedTexts.map((item) => item.text).join(state.separator);
+      state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
+
       if (jsonData.classes && Array.isArray(jsonData.classes)) {
         mutations.loadClasses(state, jsonData.classes);
       }
     }
-  },  
-  
-  
+  },
+
   addClass(state, payload) {
     // Check if the class already exists
     const existingClass = state.classes.find((c) => c.name === payload);
-  
+
     // If the class already exists, return
     if (existingClass) {
       ////console.log('Class already exists, returning.');
       return;
     }
-  
+
     // Add the new class
     const lastIndex = state.classes.reduce((p, c) => (c.id > p ? c.id : p), 0);
     const newClass = {
@@ -236,19 +181,19 @@ export const mutations = {
       name: payload,
       color: niceColors[lastIndex % niceColors.length],
     };
-  
+
     // Check again to handle a race condition
     if (!state.classes.some((c) => c.name === newClass.name)) {
       state.classes = [...state.classes, newClass];
-  
+
       // If this is the first class, set it as the currentClass
       if (state.classes.length === 1) {
         state.currentClass = state.classes[0];
         ////console.log('Updated currentClass:', state.currentClass);
       }
     }
-  },  
-  
+  },
+
   removeClass(state, payload) {
     state.classes = state.classes.filter((c) => c.id != payload);
     if (state.currentClass.id === payload) {
@@ -269,7 +214,7 @@ export const mutations = {
   },
   setSeparator(state, payload) {
     state.separator = payload;
-    state.inputSentences =  state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
+    state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
   },
   setAnnotationPrecision(state, payload) {
     state.annotationPrecision = payload;
@@ -282,7 +227,7 @@ export const mutations = {
       state.currentIndex += 1;
       state.currentAnnotation = state.annotations[state.currentIndex] || {};
     } else {
-      alert("You have completed all the sentences");
+      //alert("You have completed all the sentences");
     }
   },
   previousSentence(state) {
@@ -297,9 +242,7 @@ export const mutations = {
     state.currentIndex = 0;
   },
   loadAnnotations(state, payload) {
-    let isValid = typeof payload === "object" &&
-    "annotations" in payload &&
-    "classes" in payload;
+    let isValid = typeof payload === "object" && "annotations" in payload && "classes" in payload;
 
     if (!isValid) {
       throw new Error("loadAnnotations: payload has invalid schema");
@@ -315,9 +258,9 @@ export const mutations = {
     for (var i = 0; i < annotations.length; i++) {
       if (annotations[i] == null) continue;
       let annotation = {
-        'text': annotations[i][0],
-        'entities': annotations[i][1].entities,
-      }
+        text: annotations[i][0],
+        entities: annotations[i][1].entities,
+      };
       newAnnotations[i] = annotation;
     }
     state.annotations = newAnnotations;
@@ -345,7 +288,7 @@ const actions = {
   },
 };
 
-window.addEventListener('beforeunload', async (event) => {
+window.addEventListener("beforeunload", async (event) => {
   event.returnValue = "Please make sure you export annotations before closing the file.";
 });
 
@@ -364,10 +307,10 @@ export default {
       annotationPrecision: "word",
       // current state
       currentAnnotation: {},
-      currentClass: tags && tags[0] || {},
+      currentClass: (tags && tags[0]) || {},
       currentIndex: 0,
       currentSentence: "",
-      currentPage: "start"
+      currentPage: "start",
     };
   },
   getters,

@@ -177,13 +177,6 @@ class TokenManager {
    */
   exportAsAnnotation() {
     let entities = [];
-    /*
-    const currentDate = new Date();
-    const dateFormatter = new Intl.DateTimeFormat('en', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    const timeFormatter = new Intl.DateTimeFormat('en', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const date = dateFormatter.format(currentDate);
-    const time = timeFormatter.format(currentDate);
-    */
     for (let i = 0; i < this.tokens.length; i++) {
       if (this.tokens[i].type === "token-block") {
         let b = this.tokens[i];

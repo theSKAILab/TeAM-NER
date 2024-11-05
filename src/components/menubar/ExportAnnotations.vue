@@ -33,7 +33,7 @@ export default {
         annotations: this.annotations.map(annotation => [
           annotation.text,  // Text directly in the array
           {
-            entities: annotation.entities.map(entity => {
+            entities: annotation.entities.length? annotation.entities.map(entity => {
               let history = entity[9] || [];  // Ensure history is initialized
 
               const state = entity[5] === 2 ? "Rejected" :
@@ -56,7 +56,7 @@ export default {
                 entity[2], // end position
                 history.map(h => [h[0], h[1], h[2], h[3]]) // history array
               ];
-            })
+            }): []
           }
         ])
       };
@@ -69,7 +69,6 @@ export default {
         console.error("Export failed:", error);
       }
     },
-	
 	formatDate(date) {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
