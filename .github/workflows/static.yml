@@ -36,7 +36,9 @@ jobs:
         id: pnpm-install
         with:
           version: 8.5.0
-          run_install: true
+          run_install: false
+      - name: Install
+        run: pnpm install
       - name: Build
         run: pnpm build
       - name: Setup Pages
