@@ -169,7 +169,8 @@
       */
      // Inside AnnotationPage.vue
      applyAnnotationHistory() {
-      const annotationHistory = this.annotationHistory;
+      console.log(this.annotationHistory)
+      const annotationHistory = this.annotationHistory[this.currentIndex];
       if (annotationHistory && annotationHistory.length > 0) {
           annotationHistory.forEach((annotation) => {
               const [labelName, start, end, , name,, ogNLP] = annotation;
