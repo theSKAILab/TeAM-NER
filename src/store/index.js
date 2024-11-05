@@ -102,7 +102,7 @@ export const mutations = {
     });
     }
 
-  state.annotationHistory = annotationHistory;
+  state.annotationHistory[state.currentIndex] = annotationHistory;
   ////console.log(annotationHistory)
   },
   setInputSentences(state, payload) {
@@ -182,12 +182,12 @@ export const mutations = {
                   ////console.log("Loaded annotation history:", types);
               }
       
-        });
-        if (annotationEntities.entities.length) state.annotationHistory = annotationHistory;
+          });
+        state.annotationHistory[i] = annotationHistory;
         ////console.log("Updated state.annotationHistory:", state.annotationHistory);
       return { id: i, text: annotationText };
     });
-
+      console.log(state.annotationHistory)
       state.originalText = processedTexts.map(item => item.text).join(state.separator);
       state.inputSentences =  state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
   
@@ -331,7 +331,7 @@ export default {
     let tags = LocalStorage.getItem("tags");
     return {
       annotations: [],
-      annotationHistory: [],
+      annotationHistory: {},
       undoStack: [],
       classes: tags || [],
       inputSentences: [],
