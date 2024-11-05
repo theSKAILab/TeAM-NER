@@ -160,9 +160,28 @@ export const mutations = {
         
         // Store the history of annotations to export to review page 
         let annotationHistory = [];
+        // Set the current class for the preceding two indices of each entity
+        /* THIS IS FOR THEIR OLD FILE STRUCTURE 
+        if (annotationClassIds.length > 0) {
+          annotationEntities.entities.forEach(entity => {
+            if (entity.length >= 3) {
+              const start = entity[0];
+              const end = entity[1];
+              // type = the block of information that contains the name, date label etc..
+              const type = entity[3];
+              const label = entity[2];
+              const name = type[0][3];
+              const status = type[0][4];
+              ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
+              annotationHistory.push([label, start, end, type, name, status]);
+              const textSnippet = annotationText.slice(start, end);
+              const textIndices = [start - 1, start - 2]; // Adjust indices as needed
+  
+              ////console.log("THIS CONSOLE.LOG", sstate, label, textSnippet, textIndices);
+            }
+        }); */
           ////console.log("help")
-        console.log(annotationEntities)
-        annotationEntities.entities.forEach(entity => {
+          annotationEntities.entities.forEach(entity => {
               if (entity.length >= 3) {
                   ////console.log("help")
                   const start = entity[0];
@@ -185,6 +204,8 @@ export const mutations = {
           });
         state.annotationHistory[i] = annotationHistory;
         ////console.log("Updated state.annotationHistory:", state.annotationHistory);
+      
+
       return { id: i, text: annotationText };
     });
       console.log(state.annotationHistory)
@@ -260,6 +281,8 @@ export const mutations = {
     if (state.currentIndex < state.inputSentences.length - 1) {
       state.currentIndex += 1;
       state.currentAnnotation = state.annotations[state.currentIndex] || {};
+    } else {
+      alert("You have completed all the sentences");
     }
   },
   previousSentence(state) {

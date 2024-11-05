@@ -115,18 +115,8 @@
     },
     created() {
       if (this.inputSentences.length) {
-        this.tokenizeCurrentSentence()
+        this.tokenizeCurrentSentence();
       }
-      // Add blocks for all paragraphs
-      for (var i = 0; i < this.inputSentences.length; i++) {
-        this.$store.commit("addAnnotation", {
-          text: this.inputSentences[i].text,
-          entities: {},
-        });
-        this.nextSentence();
-      }
-      this.resetIndex();
-
       document.addEventListener("mouseup", this.selectTokens);
       document.addEventListener('keydown', this.keypress);
     },
@@ -155,6 +145,28 @@
       undo() {
         //console.log("Undo Stack:", this.addedTokensStack);
       },
+      /*
+      // Load history of annotations from input file 
+      applyAnnotationHistory() {
+        const annotationHistory = this.annotationHistory;
+        if (annotationHistory && annotationHistory.length > 0) {
+          annotationHistory.forEach((annotation) => {
+            const [labelName, start, end, , name] = annotation;
+            // Set humanOpinion to false ONLY if the name is "nlp"
+            const humanOpinion = name !== "nlp";
+            // Find the matching class object
+            const _class = this.classes.find(cls => cls.name === labelName);
+            if (_class) {
+              // Pass humanOpinion to the addNewBlock method of TokenManager
+              //console.log("THE OPINION IS HUMAN? ", humanOpinion)
+              this.tm.addNewBlock(start, end, _class, humanOpinion);
+            } else {
+              console.warn(`Label "${labelName}" not found in classes.`);
+            }
+          });
+        }
+      },
+      */
      // Inside AnnotationPage.vue
      applyAnnotationHistory() {
       console.log(this.annotationHistory)
