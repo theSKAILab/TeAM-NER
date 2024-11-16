@@ -45,9 +45,17 @@ export default {
                 annotator,
                 entity[3], // The class or label from the entity
               ];
-
+              console.log(state, history.length)
               // Fixes duplicate entries in history (only add if no history OR state changes)
-              if ((state == "Candidate" && history.length == 0) || (history[history.length-1][0] != state))  {
+              if (history.length == 0 && state == "Accepted") {
+                history.push([
+                  "Candidate",
+                  this.formatDate(new Date()),
+                  annotator,
+                  entity[3], // The class or label from the entity
+                ])
+                history.push(newHistoryEntry); // add to file history
+              } else if ((state == "Candidate" && history.length == 0) || (history[history.length-1][0] != state))  {
                 history.push(newHistoryEntry); // add to file history
               }
 
