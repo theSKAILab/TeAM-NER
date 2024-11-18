@@ -208,7 +208,7 @@ export default {
         }
       });
       ////console.log("Removing block with details:", blockDetails);  // Logging all block details
-      this.tm.removeBlock(tokenStart);
+      this.tm.makeRejected(tokenStart);
       this.save();
     },
     undo() {

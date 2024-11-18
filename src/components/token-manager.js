@@ -115,6 +115,7 @@ class TokenManager {
           tokens: tokens,
           humanOpinion: true,
           label: _class.name,
+          isDeleted: false,
           classId: _class.id || 0,
           backgroundColor: _class.color || null,
           // Set these attributes for all token-blocks, updating existing blocks as needed
@@ -150,6 +151,22 @@ class TokenManager {
       }
     }
     this.tokens = newTokens;
+  }
+
+  /**
+   * Marks a token block as rejected
+   * 
+   * @param {Number} blockStart 
+   */
+  makeRejected(blockStart) {
+    for (let i = 0; i < this.tokens.length; i++) {
+      if (this.tokens[i].start == blockStart) {
+        this.tokens[i].status = "Rejected";
+        this.tokens[i].isSymbolActive = 2;
+        this.tokens[i].isDeleted = true;
+        console.log(this.tokens[i]);
+      }
+    }
   }
 
   /**
