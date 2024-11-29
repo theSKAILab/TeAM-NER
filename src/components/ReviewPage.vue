@@ -86,6 +86,7 @@ export default {
         text: this.inputSentences[i].text,
         entities: {},
       });
+      this.save()
       this.nextSentence();
     }
     this.resetIndex();
