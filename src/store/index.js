@@ -54,19 +54,22 @@ export const mutations = {
         console.log(entity);
         if (entity.length >= 3) {
           ////console.log("help")
-          const start = entity[1];
-          const end = entity[2];
-          const history = entity[9]; // This will store all blocks as you wanted
-          const recentHistory = history ? history[history.length - 1] : null; // This now assigns only the last block to 'type'
-          const ogtype = history ? history[0][0] : null;
-          const label = entity[3];
-          const name = entity[0];
-          const status = entity[8];
-          var ogNLP = false;
-          if (ogtype && ogtype[2] === "nlp") ogNLP = true;
+          const thisAnnotationHistory = entity[2]
+          const latestEntry = thisAnnotationHistory[thisAnnotationHistory.length - 1];
 
-          ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
-          annotationHistory.push([label, start, end, recentHistory, name, status, ogNLP, history]);
+          const historyEntry = {
+            start: entity[0],
+            end: entity[1],
+            history: thisAnnotationHistory,
+            status: latestEntry[0],
+            name: latestEntry[2],
+            label: latestEntry[3],
+            isSymbolActive: determineSymbolState(latestEntry[0]),
+            ogNLP: thisAnnotationHistory[0][2] === "nlp",
+          }
+
+          //[b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]
+          annotationHistory.push(historyEntry);
         }
       });
     }
@@ -75,7 +78,6 @@ export const mutations = {
     ////console.log(annotationHistory)
   },
   setInputSentences(state, payload) {
-    try {
       let jsonData;
       if (typeof payload === "string") {
         // Check if the payload is a JSON string
@@ -115,8 +117,13 @@ export const mutations = {
 
       // Continue with the JSON data processing
       processJsonData(jsonData);
-    } catch (error) {
-      console.error(`Error processing payload: ${error.message}`);
+    function determineSymbolState(status) {
+      switch (status) {
+        case "Accepted": return 1;
+        case "Rejected": return 2;
+        case "Candidate": return 0;
+        default: return 0; // Default to candidate if unrecognized status
+      }
     }
 
     function processJsonData(jsonData) {
@@ -128,23 +135,25 @@ export const mutations = {
       const processedTexts = jsonData.annotations.map(([annotationText, annotationEntities], i) => {
         // Store the history of annotations to export to review page
         let annotationHistory = [];
-        ////console.log("help")
         annotationEntities.entities.forEach((entity) => {
           if (entity.length >= 3) {
-            ////console.log("help")
-            const start = entity[0];
-            const end = entity[1];
-            const types = entity[2]; // This will store all blocks as you wanted
-            const type = types[types.length - 1]; // This now assigns only the last block to 'type'
-            const ogtype = types[0];
-            const label = type[3];
-            const name = type[2];
-            const status = type[0];
-            var ogNLP = false;
-            if (ogtype[2] === "nlp") ogNLP = true;
+            
+            const thisAnnotationHistory = entity[2]
+            const latestEntry = thisAnnotationHistory[thisAnnotationHistory.length - 1];
 
-            ////console.log("label: ",label, "start: ",start, "end: ",end, "type: ",type, "name: ", name, "status: ", status);
-            annotationHistory.push([label, start, end, type, name, status, ogNLP, types]);
+            const historyEntry = {
+              start: entity[0],
+              end: entity[1],
+              history: thisAnnotationHistory,
+              status: latestEntry[0],
+              name: latestEntry[2],
+              label: latestEntry[3],
+              isSymbolActive: determineSymbolState(latestEntry[0]),
+              ogNLP: thisAnnotationHistory[0][2] === "nlp",
+            }
+
+            //[b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]
+            annotationHistory.push(historyEntry);
 
             ////console.log("Loaded annotation history:", types);
           }
@@ -154,7 +163,6 @@ export const mutations = {
 
         return { id: i, text: annotationText };
       });
-      console.log(state.annotationHistory);
       state.originalText = processedTexts.map((item) => item.text).join(state.separator);
       state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
 

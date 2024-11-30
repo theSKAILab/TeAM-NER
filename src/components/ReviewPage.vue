@@ -84,7 +84,7 @@ export default {
     for (var i = 0; i < this.inputSentences.length; i++) {
       this.$store.commit("addAnnotation", {
         text: this.inputSentences[i].text,
-        entities: {},
+        entities: this.annotationHistory[i],
       });
       this.save()
       this.nextSentence();
@@ -276,33 +276,19 @@ export default {
     },
     // Inside AnnotationPage.vue
     applyAnnotationHistory() {
-      console.log(this.annotationHistory)
+      console.log(this.annotationHistory,this.currentAnnotation)
       const annotationHistory = this.annotationHistory[this.currentIndex];
       if (annotationHistory && annotationHistory.length > 0) {
         annotationHistory.forEach((annotation) => {
-          const [labelName, start, end, , name, status, ogNLP, types] = annotation;
-          const humanOpinion = name !== "nlp";
-          const initiallyNLP = ogNLP;
-          const _class = this.classes.find(cls => cls.name === labelName);
-          const isSymbolActive = this.determineSymbolState(status);
+          const _class = this.classes.find(cls => cls.name == annotation.label);
           ////console.log("Added block with symbol ", isSymbolActive);
 
           if (_class) {
             // Determine the most recent status for isSymbolActive
-            this.tm.addNewBlock(start, end, _class, humanOpinion, initiallyNLP, true, name, status, types, false, isSymbolActive);
+            //_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, userHasToggled = true,isSymbolActive = 0
+            this.tm.addNewBlock(annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive);
           } else {
-            console.warn(`Label "${labelName}" not found in classes.`);
-          }
-        });
-
-        // Adjust humanOpinion based on 'nlp' name
-        this.tm.tokens.forEach(token => {
-          if (token.type === "token-block") {
-            const isNLP = annotationHistory.some(annotation => {
-              const [, start, end, , name] = annotation;
-              return name === "nlp" && token.start === start && token.end === end;
-            });
-            token.humanOpinion = !isNLP;
+            console.warn(`Label "${annotation[3]}" not found in classes.`);
           }
         });
       }
