@@ -77,18 +77,11 @@ export default {
     }
   },
   created() {
+    // Add blocks for all paragraphs
+    this.resetBlocks()
     if (this.inputSentences.length) {
       this.tokenizeCurrentSentence()
     }
-    // Add blocks for all paragraphs
-    for (var i = 0; i < this.inputSentences.length; i++) {
-      this.$store.commit("addAnnotation", {
-        text: this.inputSentences[i].text,
-        entities: {},
-      });
-      this.nextSentence();
-    }
-    this.resetIndex();
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
   },
@@ -150,29 +143,6 @@ export default {
         }
       });
       this.save()
-    },
-    onAddBlock(start, end, _class, humanOpinion, initiallyNLP = false, isLoaded, name = "name", status = "candidate", annotationHistory, userHasToggled = false, isSymbolActive = 0) {
-      ////console.log("Adding block:", start, end, _class);  // Confirm
-      this.recordAction({
-        type: 'addBlock',
-        details: {
-          start,
-          end,
-          _class,
-          humanOpinion,
-          initiallyNLP,
-          isLoaded,
-          name,
-          status,
-          annotationHistory,
-          userHasToggled,
-          isSymbolActive,
-          timestamp: Date.now()
-        }
-      });
-      this.tm.addNewBlock(start, end, _class, humanOpinion, initiallyNLP, isLoaded, name, status, annotationHistory, userHasToggled, isSymbolActive);
-      // Ensure that the action is correctly recorded in the undo stack
-      this.save();
     },
     revertAddBlock(details) {
       // Assuming you have a method to remove a block based on some criteria
@@ -273,39 +243,6 @@ export default {
       }
       this.save();
     },
-    // Inside AnnotationPage.vue
-    applyAnnotationHistory() {
-      console.log(this.annotationHistory)
-      const annotationHistory = this.annotationHistory[this.currentIndex];
-      if (annotationHistory && annotationHistory.length > 0) {
-        annotationHistory.forEach((annotation) => {
-          const [labelName, start, end, , name, status, ogNLP, types] = annotation;
-          const humanOpinion = name !== "nlp";
-          const initiallyNLP = ogNLP;
-          const _class = this.classes.find(cls => cls.name === labelName);
-          const isSymbolActive = this.determineSymbolState(status);
-          ////console.log("Added block with symbol ", isSymbolActive);
-
-          if (_class) {
-            // Determine the most recent status for isSymbolActive
-            this.tm.addNewBlock(start, end, _class, humanOpinion, initiallyNLP, true, name, status, types, false, isSymbolActive);
-          } else {
-            console.warn(`Label "${labelName}" not found in classes.`);
-          }
-        });
-
-        // Adjust humanOpinion based on 'nlp' name
-        this.tm.tokens.forEach(token => {
-          if (token.type === "token-block") {
-            const isNLP = annotationHistory.some(annotation => {
-              const [, start, end, , name] = annotation;
-              return name === "nlp" && token.start === start && token.end === end;
-            });
-            token.humanOpinion = !isNLP;
-          }
-        });
-      }
-    },
     determineSymbolState(status) {
       switch (status) {
         case "Accepted": return 1;
@@ -317,7 +254,6 @@ export default {
     tokenizeCurrentSentence() {
       this.currentSentence = this.inputSentences[this.currentIndex];
       this.currentAnnotation = this.annotations[this.currentIndex];
-
       let tokens, spans;
 
       if (this.$store.state.annotationPrecision == "char") {
@@ -336,8 +272,6 @@ export default {
 
       this.tm = new TokenManager(this.classes);
       this.tm.setTokensAndAnnotation(combined, this.currentAnnotation);
-      // Call applyAnnotationHistory after setting up tokens and annotations
-      this.applyAnnotationHistory();
     },
     selectTokens() {
       let selection = document.getSelection();
@@ -401,9 +335,16 @@ export default {
       this.save();
     },
     resetBlocks() {
-      this.tm.resetBlocks();
-      this.addedTokensStack = [];
-      this.save();
+      this.resetIndex();
+      for (var i = 0; i < this.inputSentences.length; i++) {
+        this.$store.commit("addAnnotation", {
+          text: this.inputSentences[i].text,
+          entities: this.annotationHistory[i] != undefined ? this.annotationHistory[i] : [],
+        });
+        this.nextSentence();
+      }
+      this.resetIndex();
+      this.tokenizeCurrentSentence();
     },
     skipCurrentSentence() {
       this.nextSentence();
@@ -415,7 +356,6 @@ export default {
     },
     saveTags() {
       this.save();
-      this.$store.commit("updateAnnotationHistory")
       this.nextSentence();
       this.tokenizeCurrentSentence();
     },

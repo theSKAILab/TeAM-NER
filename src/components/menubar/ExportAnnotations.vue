@@ -34,34 +34,31 @@ export default {
           annotation.text,  // Text directly in the array
           {
             entities: annotation.entities.length? annotation.entities.map(entity => {
-              let history = entity[9] || [];  // Ensure history is initialized
-
-              const state = entity[5] === 2 ? "Rejected" :
-                            entity[5] === 1 ? "Accepted" : "Candidate";
-
+              //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive
+              let history = entity.history || [];  // Ensure history is initialized
+              
               const newHistoryEntry = [
-                state,
+                entity.status,
                 this.formatDate(new Date()),
                 annotator,
-                entity[3], // The class or label from the entity
+                entity.label, // The class or label from the entity
               ];
-              console.log(state, history.length)
               // Fixes duplicate entries in history (only add if no history OR state changes)
-              if (history.length == 0 && state == "Accepted") {
+              if (history.length == 0 && entity.status == "Accepted") {
                 history.push([
                   "Candidate",
                   this.formatDate(new Date()),
                   annotator,
-                  entity[3], // The class or label from the entity
+                  entity.label, // The class or label from the entity
                 ])
                 history.push(newHistoryEntry); // add to file history
-              } else if ((state == "Candidate" && history.length == 0) || (history[history.length-1][0] != state))  {
+              } else if ((entity.status == "Candidate" && history.length == 0) || (history[history.length-1][0] != entity.status))  {
                 history.push(newHistoryEntry); // add to file history
               }
 
               return [
-                entity[1], // start position
-                entity[2], // end position
+                entity.start, // start position
+                entity.end, // end position
                 history.map(h => [h[0], h[1], h[2], h[3]]) // history array
               ];
             }): []

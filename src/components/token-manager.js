@@ -25,16 +25,16 @@ class TokenManager {
     this.words = tokens.map(t => t[2]);
 
     if (currentAnnotation != undefined) {
-      // reset prevoius annotation state
+      // reset previous annotation state
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
-        var start = currentAnnotation.entities[i][1];
-        var end = currentAnnotation.entities[i][2];
-        var entityName = currentAnnotation.entities[i][3];
-        var entityClass = this.classes.find(c => c.name.toUpperCase() === entityName.toUpperCase());        
+        var annotation = currentAnnotation.entities[i];
+  
+        var entityName = annotation.label;
+        var entityClass = this.classes.find(c => c.name == entityName);        
         if (!entityClass) {
           entityClass = {"name": entityName};
         }
-        this.addNewBlock(start, end, entityClass, true);
+        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.history, false, annotation.isSymbolActive);
       }
     }
   }
@@ -180,7 +180,17 @@ class TokenManager {
     for (let i = 0; i < this.tokens.length; i++) {
       if (this.tokens[i].type === "token-block") {
         let b = this.tokens[i];
-        entities.push([b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]);
+        const historyEntry = {
+          start: b.start,
+          end: b.end,
+          history: b.annotationHistory,
+          status: b.status,
+          name: b.name,
+          label: b.label,
+          isSymbolActive: b.isSymbolActive,
+          ogNLP: b.initiallyNLP,
+        }
+        entities.push(historyEntry);
       }
     }
     return entities;
@@ -194,17 +204,9 @@ class TokenManager {
         return token;
       }
     }
-    ////console.log("Error, Unable to get block by start in token-manager.js");
+
     return null;
   }  
 }
 
-
-
 export default TokenManager;
-
-
-
-/// Make toggle between open/close/reject
-/// Update it so previous / loadable 
-/// 
