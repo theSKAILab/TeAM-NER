@@ -35,20 +35,16 @@ export default {
           {
             entities: annotation.entities.length? annotation.entities.map(entity => {
               //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive
-              let history = entity.annotationHistory || [];  // Ensure history is initialized
-
-              const state = entity.status === 2 ? "Rejected" :
-                            entity.status === 1 ? "Accepted" : "Candidate";
-
+              let history = entity.history || [];  // Ensure history is initialized
+              
               const newHistoryEntry = [
-                state,
+                entity.status,
                 this.formatDate(new Date()),
                 annotator,
                 entity.label, // The class or label from the entity
               ];
-              console.log(state, history.length)
               // Fixes duplicate entries in history (only add if no history OR state changes)
-              if (history.length == 0 && state == "Accepted") {
+              if (history.length == 0 && entity.status == "Accepted") {
                 history.push([
                   "Candidate",
                   this.formatDate(new Date()),
@@ -56,7 +52,7 @@ export default {
                   entity.label, // The class or label from the entity
                 ])
                 history.push(newHistoryEntry); // add to file history
-              } else if ((state == "Candidate" && history.length == 0) || (history[history.length-1][0] != state))  {
+              } else if ((entity.status == "Candidate" && history.length == 0) || (history[history.length-1][0] != entity.status))  {
                 history.push(newHistoryEntry); // add to file history
               }
 

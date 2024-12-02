@@ -77,19 +77,18 @@ export default {
     }
   },
   created() {
-    if (this.inputSentences.length) {
-      this.tokenizeCurrentSentence()
-    }
     // Add blocks for all paragraphs
     for (var i = 0; i < this.inputSentences.length; i++) {
       this.$store.commit("addAnnotation", {
         text: this.inputSentences[i].text,
-        entities: this.annotationHistory[i],
+        entities: this.annotationHistory[i] != undefined ? this.annotationHistory[i] : [],
       });
-      this.save()
       this.nextSentence();
     }
     this.resetIndex();
+    if (this.inputSentences.length) {
+      this.tokenizeCurrentSentence()
+    }
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
   },
@@ -151,29 +150,6 @@ export default {
         }
       });
       this.save()
-    },
-    onAddBlock(start, end, _class, humanOpinion, initiallyNLP = false, isLoaded, name = "name", status = "candidate", annotationHistory, userHasToggled = false, isSymbolActive = 0) {
-      ////console.log("Adding block:", start, end, _class);  // Confirm
-      this.recordAction({
-        type: 'addBlock',
-        details: {
-          start,
-          end,
-          _class,
-          humanOpinion,
-          initiallyNLP,
-          isLoaded,
-          name,
-          status,
-          annotationHistory,
-          userHasToggled,
-          isSymbolActive,
-          timestamp: Date.now()
-        }
-      });
-      this.tm.addNewBlock(start, end, _class, humanOpinion, initiallyNLP, isLoaded, name, status, annotationHistory, userHasToggled, isSymbolActive);
-      // Ensure that the action is correctly recorded in the undo stack
-      this.save();
     },
     revertAddBlock(details) {
       // Assuming you have a method to remove a block based on some criteria
@@ -274,25 +250,6 @@ export default {
       }
       this.save();
     },
-    // Inside AnnotationPage.vue
-    applyAnnotationHistory() {
-      console.log(this.annotationHistory,this.currentAnnotation)
-      const annotationHistory = this.annotationHistory[this.currentIndex];
-      if (annotationHistory && annotationHistory.length > 0) {
-        annotationHistory.forEach((annotation) => {
-          const _class = this.classes.find(cls => cls.name == annotation.label);
-          ////console.log("Added block with symbol ", isSymbolActive);
-
-          if (_class) {
-            // Determine the most recent status for isSymbolActive
-            //_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, userHasToggled = true,isSymbolActive = 0
-            this.tm.addNewBlock(annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive);
-          } else {
-            console.warn(`Label "${annotation[3]}" not found in classes.`);
-          }
-        });
-      }
-    },
     determineSymbolState(status) {
       switch (status) {
         case "Accepted": return 1;
@@ -304,7 +261,6 @@ export default {
     tokenizeCurrentSentence() {
       this.currentSentence = this.inputSentences[this.currentIndex];
       this.currentAnnotation = this.annotations[this.currentIndex];
-
       let tokens, spans;
 
       if (this.$store.state.annotationPrecision == "char") {
@@ -323,8 +279,6 @@ export default {
 
       this.tm = new TokenManager(this.classes);
       this.tm.setTokensAndAnnotation(combined, this.currentAnnotation);
-      // Call applyAnnotationHistory after setting up tokens and annotations
-      this.applyAnnotationHistory();
     },
     selectTokens() {
       let selection = document.getSelection();
@@ -388,9 +342,7 @@ export default {
       this.save();
     },
     resetBlocks() {
-      this.tm.resetBlocks();
-      this.addedTokensStack = [];
-      this.save();
+      console.log(this.currentAnnotation)
     },
     skipCurrentSentence() {
       this.nextSentence();
@@ -402,7 +354,6 @@ export default {
     },
     saveTags() {
       this.save();
-      this.$store.commit("updateAnnotationHistory")
       this.nextSentence();
       this.tokenizeCurrentSentence();
     },

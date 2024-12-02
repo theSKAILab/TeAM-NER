@@ -25,7 +25,7 @@ class TokenManager {
     this.words = tokens.map(t => t[2]);
 
     if (currentAnnotation != undefined) {
-      // reset prevoius annotation state
+      // reset previous annotation state
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
         var annotation = currentAnnotation.entities[i];
   
@@ -34,7 +34,7 @@ class TokenManager {
         if (!entityClass) {
           entityClass = {"name": entityName};
         }
-        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive);
+        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.history, false, annotation.isSymbolActive);
       }
     }
   }
@@ -204,17 +204,9 @@ class TokenManager {
         return token;
       }
     }
-    ////console.log("Error, Unable to get block by start in token-manager.js");
+
     return null;
   }  
 }
 
-
-
 export default TokenManager;
-
-
-
-/// Make toggle between open/close/reject
-/// Update it so previous / loadable 
-/// 

@@ -45,38 +45,6 @@ export const mutations = {
     state.currentClass = state.classes[0];
     LocalStorage.set("tags", state.classes);
   },
-  updateAnnotationHistory(state, payload) {
-    let annotationHistory = [];
-    console.log(state.annotations.entities)
-    if (state.annotations.entities) {
-      var annotationEntities = state.annotations.entities;
-      annotationEntities.forEach((entity) => {
-        console.log(entity);
-        if (entity.length >= 3) {
-          ////console.log("help")
-          const thisAnnotationHistory = entity[2]
-          const latestEntry = thisAnnotationHistory[thisAnnotationHistory.length - 1];
-
-          const historyEntry = {
-            start: entity[0],
-            end: entity[1],
-            history: thisAnnotationHistory,
-            status: latestEntry[0],
-            name: latestEntry[2],
-            label: latestEntry[3],
-            isSymbolActive: determineSymbolState(latestEntry[0]),
-            ogNLP: thisAnnotationHistory[0][2] === "nlp",
-          }
-
-          //[b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]
-          annotationHistory.push(historyEntry);
-        }
-      });
-    }
-
-    state.annotationHistory[state.currentIndex] = annotationHistory;
-    ////console.log(annotationHistory)
-  },
   setInputSentences(state, payload) {
       let jsonData;
       if (typeof payload === "string") {
@@ -159,7 +127,6 @@ export const mutations = {
           }
         });
         if (annotationEntities.entities.length) state.annotationHistory[i] = annotationHistory;
-        ////console.log("Updated state.annotationHistory:", state.annotationHistory);
 
         return { id: i, text: annotationText };
       });
@@ -212,7 +179,6 @@ export const mutations = {
     state.currentClass = state.classes[payload];
   },
   addAnnotation(state, payload) {
-    ////console.log(payload)
     state.annotations[state.currentIndex] = payload;
     state.currentAnnotation = payload;
   },
