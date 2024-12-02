@@ -78,14 +78,7 @@ export default {
   },
   created() {
     // Add blocks for all paragraphs
-    for (var i = 0; i < this.inputSentences.length; i++) {
-      this.$store.commit("addAnnotation", {
-        text: this.inputSentences[i].text,
-        entities: this.annotationHistory[i] != undefined ? this.annotationHistory[i] : [],
-      });
-      this.nextSentence();
-    }
-    this.resetIndex();
+    this.resetBlocks()
     if (this.inputSentences.length) {
       this.tokenizeCurrentSentence()
     }
@@ -342,7 +335,16 @@ export default {
       this.save();
     },
     resetBlocks() {
-      console.log(this.currentAnnotation)
+      this.resetIndex();
+      for (var i = 0; i < this.inputSentences.length; i++) {
+        this.$store.commit("addAnnotation", {
+          text: this.inputSentences[i].text,
+          entities: this.annotationHistory[i] != undefined ? this.annotationHistory[i] : [],
+        });
+        this.nextSentence();
+      }
+      this.resetIndex();
+      this.tokenizeCurrentSentence();
     },
     skipCurrentSentence() {
       this.nextSentence();
