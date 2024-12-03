@@ -51,23 +51,6 @@ class TokenManager {
    */
   addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, userHasToggled = true,isSymbolActive = 0) {
     // Directly apply humanOpinion to the block structure
-    let block = {
-      type: "token-block",
-      annotationHistory: annotationHistory,
-      start: _start,
-      end: _end,
-      name: name,
-      label: _class.name,
-      humanOpinion: true,
-      initiallyNLP: initiallyNLP,
-      userHasToggled: userHasToggled, // Ensure it's set for the new block
-      isSymbolActive: isSymbolActive, // Ensure it's set for the new block
-      isCandidate: false,
-      isLoaded: isLoaded,
-      status: status,
-      tokens: this.tokens.filter(token => token.start >= _start && token.end <= _end),
-      backgroundColor: _class.color || null,
-    };
     let selectedTokens = [];
     let newTokens = [];
   

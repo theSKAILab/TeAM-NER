@@ -83,12 +83,14 @@ export default {
   },
   methods: {
     toggleSymbol() {
-      this.recordAction('symbol-state', this.isSymbolActive);
+      //this.recordAction('symbol-state', this.isSymbolActive);
+      let oldState = this.isSymbolActive;
       let nextState = (this.isSymbolActive + 1) % 3;
       this.userHasToggled = true;
       this.$emit('update-symbol-state', {
         tokenStart: this.token.start,
-        newSymbolState: nextState
+        newSymbolState: nextState,
+        oldSymbolState: oldState
       });
     },
     toggleReviewed() {
