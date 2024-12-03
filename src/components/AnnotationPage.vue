@@ -19,9 +19,9 @@
 </template>
   <script>
   import { mapState, mapMutations } from "vuex";
-  import Token from "./Token";
-  import TokenBlock from "./TokenBlock";
-  import ClassesBlock from "./ClassesBlock.vue";
+  import Token from "./blocks/Token";
+  import TokenBlock from "./blocks/TokenBlock";
+  import ClassesBlock from "./blocks/ClassesBlock.vue";
   import TokenManager from "./token-manager";
   import TreebankTokenizer from "treebank-tokenizer";
 

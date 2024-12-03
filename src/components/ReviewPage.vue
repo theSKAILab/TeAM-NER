@@ -24,9 +24,9 @@
 </template>
 <script>
 import { mapState, mapMutations } from "vuex";
-import Token from "./Token";
-import TokenBlock from "./TokenBlock";
-import ClassesBlock from "./ClassesBlock.vue";
+import Token from "./blocks/Token";
+import TokenBlock from "./blocks/TokenBlock";
+import ClassesBlock from "./blocks/ClassesBlock.vue";
 import TokenManager from "./token-manager";
 import TreebankTokenizer from "treebank-tokenizer";
 
@@ -114,6 +114,7 @@ export default {
       this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
     },
     handleSymbolUpdate(tokenStart, newSymbolState, userHasToggled) {
+      this.addToUndo(tokenStart);
       const token = this.tm.getTokenByStart(tokenStart);
       if (!token) {
         console.error("No token found for start:", tokenStart);
@@ -130,118 +131,57 @@ export default {
       token.userHasToggled = userHasToggled; // Ensure this property exists and is settable
 
 
-      // for undo stack
-      this.recordAction({
-        type: 'symbolUpdate',
-        details: {
-          tokenStart,
-          oldSymbolState,
-          newSymbolState,
-          oldUserHasToggled,
-          newUserHasToggled: userHasToggled,
-          timestamp: Date.now()
-        }
-      });
       this.save()
     },
-    revertAddBlock(details) {
-      // Assuming you have a method to remove a block based on some criteria
-      this.tm.removeBlock(details.start, details.end, details._class);
+    onRemoveBlock(tokenStart) {
+      this.addToUndo(tokenStart)
+      this.tm.removeBlock(tokenStart);
       this.save();
     },
-    onRemoveBlock(tokenStart) {
+    onReplaceBlockLabel(blockStart) {
+      this.addToUndo(blockStart);
+      const existingBlock = this.tm.getBlockByStart(blockStart);
+      // Remove the existing block
+      this.tm.removeBlock(blockStart);
+      // Create a new block with the same start and end, but with the current tag/label/class
+      if (existingBlock.start !== undefined && existingBlock.end !== undefined) {
+        this.addedTokensStack.push(existingBlock.start);
+        this.tm.addNewBlock(existingBlock.start, existingBlock.end, this.currentClass);
+      }
+      console.log(this.undoStack)
+      this.save();
+    },
+    addToUndo(tokenStart) {
       const block = this.tm.getBlockByStart(tokenStart);
       if (!block) {
         console.error('Block not found for start:', tokenStart);
         return;
       }
-      const blockDetails = {
-        start: block.start,
-        end: block.end,
-        _class: block.label,  // Assuming 'label' is the class; adjust if the actual property name differs
-        humanOpinion: block.humanOpinion,
-        initiallyNLP: block.initiallyNLP,
-        isLoaded: block.isLoaded,
-        name: block.name,
-        status: block.status,
-        annotationHistory: block.annotationHistory,
-        userHasToggled: block.userHasToggled,
-        isSymbolActive: block.isSymbolActive,
-        // Include any additional fields that are important for the functionality or logging
-      };
       this.recordAction({
-        type: 'blockRemove',
+        type: 'genericUndo',
         details: {
           tokenStart: block.start,
-          blockDetails: blockDetails,
+          oldBlock: block,
           timestamp: Date.now()
         }
       });
-      ////console.log("Removing block with details:", blockDetails);  // Logging all block details
-      this.tm.removeBlock(tokenStart);
-      this.save();
     },
     undo() {
       if (this.undoStack.length > 0) {
-        const lastAction = this.undoStack.pop(); // Get the most recent action
-        ////console.log("LAST ACTION BEFORE UNDO ",lastAction)
+        const lastAction = this.undoStack.pop();
+        var details = lastAction.details;
         switch (lastAction.type) {
-          case 'symbolUpdate':
-            this.revertSymbolUpdate(lastAction.details);
+          case 'undoAddBlock':
+            this.tm.removeBlock(details.start);
+            this.save();
             break;
-          case 'blockRemove':
-            this.revertBlockRemove(lastAction.details);
+          case 'genericUndo':
+            this.tm.removeBlock(details.tokenStart);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldBlock.isSymbolActive);
+            this.save();
             break;
-          case 'addBlock':
-            this.revertAddBlock(lastAction.details);
-            break;
-          default:
-          ////console.log("Unhandled action type:", lastAction.type);
         }
-      } else {
-        ////console.log("Undo Stack is empty");
       }
-    },
-    revertSymbolUpdate(details) {
-      // Revert the symbol state
-      this.tm.updateSymbolState(details.tokenStart, details.oldSymbolState);
-      // Revert the user toggle status
-      const token = this.tm.getTokenByStart(details.tokenStart);
-      if (token) {
-        token.userHasToggled = details.oldUserHasToggled;
-      }
-      this.save();
-    },
-    revertBlockAdd(details) {
-      // Assuming a method to remove a block if added inappropriately
-      this.tm.removeBlock(details.tokenStart);
-      this.save();
-    },
-    revertBlockRemove(details) {
-      if (details && details.blockDetails) {
-        ////console.log("Reverting with class details:", details.blockDetails._class);
-        if (!details.blockDetails._class) {
-          console.error('Class details are missing');
-          return;
-        }
-        // Assuming other necessary parameters are also needed
-        this.tm.addNewBlock(
-          details.blockDetails.start,
-          details.blockDetails.end,
-          details.blockDetails._class,
-          details.blockDetails.humanOpinion, // Assuming humanOpinion is a needed parameter
-          details.blockDetails.initiallyNLP, // Assuming initiallyNLP is needed
-          details.blockDetails.isLoaded,     // Assuming isLoaded is needed
-          details.blockDetails.name,         // Assuming name is needed
-          details.blockDetails.status,       // Assuming status is needed
-          details.blockDetails.annotationHistory, // Assuming annotationHistory is needed
-          details.blockDetails.userHasToggled,    // Assuming userHasToggled is needed
-          details.blockDetails.isSymbolActive    // Assuming isSymbolActive is needed
-        );
-      } else {
-        console.error('Missing details for reverting block removal');
-      }
-      this.save();
     },
     determineSymbolState(status) {
       switch (status) {
@@ -315,23 +255,6 @@ export default {
         }
       });
       selection.empty();
-      this.save();
-    },
-    // Replaces a token-block's class with the currently selected class
-    onReplaceBlockLabel(blockStart) {
-      // Get the start and end positions of the existing block before deleting it
-      const existingBlock = this.tm.getBlockByStart(blockStart);
-      const start = existingBlock.start;
-      const end = existingBlock.end;
-
-      // Remove the existing block
-      this.tm.removeBlock(blockStart);
-
-      // Create a new block with the same start and end, but with the current tag/label/class
-      if (start !== undefined && end !== undefined) {
-        this.addedTokensStack.push(start);
-        this.tm.addNewBlock(start, end, this.currentClass);
-      }
       this.save();
     },
     resetBlocks() {
