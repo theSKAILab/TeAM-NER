@@ -13,10 +13,10 @@
 
 <script>
 import { mapState } from "vuex";
-import ProgressBar from "./sidebar/ProgressBar.vue";
-import SplitTypeSelector from "./sidebar/SplitTypeSelector.vue";
-import AnnotationPrecisionSelector from "./sidebar/AnnotationPrecisionSelector.vue";
-import KeyboardShortcuts from "./sidebar/KeyboardShortcuts.vue";
+import ProgressBar from "./ProgressBar.vue";
+import SplitTypeSelector from "./SplitTypeSelector.vue";
+import AnnotationPrecisionSelector from "./AnnotationPrecisionSelector.vue";
+import KeyboardShortcuts from "./KeyboardShortcuts.vue";
 
 export default {
   name: "AnnotationSidebar",

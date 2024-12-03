@@ -33,12 +33,12 @@
 
 <script>
 import MenuBar from "./components/menubar/MenuBar.vue";
-import StartPage from "./components/StartPage.vue";
-import AnnotationPage from "./components/AnnotationPage.vue";
-import ReviewPage from "./components/ReviewPage.vue";
-import AnnotationSidebar from "./components/AnnotationSidebar.vue";
-import DragNDropOverlay from "./components/DragNDropOverlay.vue";
-import ExitDialog from "./components/ExitDialog.vue";
+import StartPage from "./components/pages/StartPage.vue";
+import AnnotationPage from "./components/pages/AnnotationPage.vue";
+import ReviewPage from "./components/pages/ReviewPage.vue";
+import AnnotationSidebar from "./components/sidebar/AnnotationSidebar.vue";
+import DragNDropOverlay from "./components/etc/DragNDropOverlay.vue";
+import ExitDialog from "./components/etc/ExitDialog.vue";
 import { mapState, mapMutations } from "vuex";
 import { useQuasar } from "quasar";
 

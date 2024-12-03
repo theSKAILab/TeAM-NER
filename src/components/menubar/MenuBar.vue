@@ -163,8 +163,8 @@ import ExportAnnotations from "./ExportAnnotations.vue";
 import { mapState, mapMutations } from "vuex";
 import { exportFile } from "./utils";
 import { useQuasar } from "quasar";
-import AboutDialog from "../AboutDialog.vue";
-import ExitDialog from "../ExitDialog.vue";
+import AboutDialog from "../etc/AboutDialog.vue";
+import ExitDialog from "../etc/ExitDialog.vue";
 
 export default {
   components: { ExportAnnotations, AboutDialog, ExitDialog },
