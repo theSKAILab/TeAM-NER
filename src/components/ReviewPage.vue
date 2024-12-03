@@ -6,7 +6,7 @@
       <component :is="t.type === 'token' ? 'Token' : 'TokenBlock'" v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
         :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
-        @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState, $event.userHasToggled)"
+        @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState, $event.oldSymbolState)"
         @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" />
     </div>
     <div class="q-pa-md" style="border-top: 1px solid #ccc">
@@ -113,22 +113,29 @@ export default {
       // Sort the undo stack by the timestamp to ensure the latest action is on top
       this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
     },
-    handleSymbolUpdate(tokenStart, newSymbolState, userHasToggled) {
-      this.addToUndo(tokenStart);
+    handleSymbolUpdate(tokenStart, newSymbolState, oldSymbolState) {
+      const block = this.tm.getBlockByStart(tokenStart);
+      this.recordAction({
+        type: 'symbolChange',
+        details: {
+          tokenStart: block.start,
+          oldBlock: block,
+          oldSymbolState: oldSymbolState,
+          timestamp: Date.now()
+        }
+      });
+      console.log(this.undoStack)
+
       const token = this.tm.getTokenByStart(tokenStart);
       if (!token) {
         console.error("No token found for start:", tokenStart);
         return;
       }
 
-      const oldSymbolState = token.isSymbolActive;
-      const oldUserHasToggled = token.userHasToggled;
-
       // Update the token's state and toggled status
       this.tm.updateSymbolState(tokenStart, newSymbolState);
       const cases = ["Candidate", "Accepted", "Rejected"];
       token.status = cases[newSymbolState];
-      token.userHasToggled = userHasToggled; // Ensure this property exists and is settable
 
 
       this.save()
@@ -168,11 +175,17 @@ export default {
     },
     undo() {
       if (this.undoStack.length > 0) {
+        console.log(this.undoStack)
         const lastAction = this.undoStack.pop();
         var details = lastAction.details;
         switch (lastAction.type) {
-          case 'undoAddBlock':
+          case 'addBlock':
             this.tm.removeBlock(details.start);
+            this.save();
+            break;
+          case 'symbolChange':
+            this.tm.removeBlock(details.tokenStart);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldSymbolState);
             this.save();
             break;
           case 'genericUndo':
@@ -230,32 +243,37 @@ export default {
         start = parseInt(rangeStart.startContainer.parentElement.id.replace("t", ""));
         let offsetEnd = parseInt(rangeEnd.endContainer.parentElement.id.replace("t", ""));
         end = offsetEnd + rangeEnd.endOffset;
+        console.log(start)
+        if (!isNaN(start) && !isNaN(end)) {
+          if (!this.classes.length && selection.anchorNode) {
+            alert(
+              "There are no Tags available. Kindly add some Tags before tagging."
+            );
+            selection.empty();
+            return;
+          }
+          ////console.log("adding manual block ", start, end, this.currentClass);
+          this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "candidate", null, true);
+          this.addedTokensStack.push(start);
+          this.recordAction({
+            type: 'addBlock',
+            details: {
+              start: start,
+              end: end,
+              _class: this.currentClass,
+              timestamp: Date.now()
+            }
+          });
+          selection.empty();
+          this.save();
+        } else {
+          console.log("selected text were not tokens");
+          selection.empty();
+        }
       } catch {
         ////console.log("selected text were not tokens");
         return;
-      }
-
-      if (!this.classes.length && selection.anchorNode) {
-        alert(
-          "There are no Tags available. Kindly add some Tags before tagging."
-        );
-        selection.empty();
-        return;
-      }
-      ////console.log("adding manual block ", start, end, this.currentClass);
-      this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "candidate", null, true);
-      this.addedTokensStack.push(start);
-      this.recordAction({
-        type: 'addBlock',
-        details: {
-          start: start,
-          end: end,
-          _class: this.currentClass,
-          timestamp: Date.now()
-        }
-      });
-      selection.empty();
-      this.save();
+      }  
     },
     resetBlocks() {
       this.resetIndex();
@@ -267,7 +285,8 @@ export default {
         this.nextSentence();
       }
       this.resetIndex();
-      this.tokenizeCurrentSentence();
+      this.undoStack = [];
+      this.tokenizeCurrentSentence()
     },
     skipCurrentSentence() {
       this.nextSentence();
