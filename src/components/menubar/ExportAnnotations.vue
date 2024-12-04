@@ -43,7 +43,7 @@ export default {
                 annotator,
                 entity.label, // The class or label from the entity
               ];
-              // Fixes duplicate entries in history (only add if no history OR state changes)
+              // New annotation in Review mode (missing initial Candidate status)
               if (history.length == 0 && entity.status == "Accepted") {
                 history.push([
                   "Candidate",
@@ -52,9 +52,10 @@ export default {
                   entity.label, // The class or label from the entity
                 ])
                 history.push(newHistoryEntry); // add to file history
-              } else if ((entity.status == "Candidate" && history.length == 0) || (history[history.length-1][0] != entity.status))  {
-                history.push(newHistoryEntry); // add to file history
-              }
+                // 
+              } else if (entity.userHasToggled && history[history.length-1][2] != annotator) history.push([history[history.length-1][0],this.formatDate(new Date()),annotator,history[history.length-1][3]]) //  Current reviewer "concurs" with previous reviewer and is not the same as previous reviewer
+                else if ((entity.status == "Candidate" && history.length == 0))  history.push(newHistoryEntry); // New annotation in Annotate mode
+                else if (history[history.length-1][0] != entity.status) history.push(newHistoryEntry); // Status change from previous entry in history
 
               return [
                 entity.start, // start position

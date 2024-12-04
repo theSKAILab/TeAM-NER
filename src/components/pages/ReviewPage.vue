@@ -7,7 +7,7 @@
         :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
         @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState, $event.oldSymbolState)"
-        @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" />
+        @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" @user-toggle="handleUserToggle"/>
     </div>
     <div class="q-pa-md" style="border-top: 1px solid #ccc">
       <q-btn class="q-mx-sm" color="primary" outline title="Undo" @click="undo" label="Undo" />
@@ -138,7 +138,6 @@ export default {
           timestamp: Date.now()
         }
       });
-      console.log(this.undoStack)
 
       const token = this.tm.getTokenByStart(tokenStart);
       if (!token) {
@@ -152,6 +151,23 @@ export default {
       token.status = cases[newSymbolState];
 
 
+      this.save()
+    },
+    /**
+     * Handles user toggle state by saving and adding to undo stack
+     *  @param {Number} blockStart - The start position of the block to remove
+     */
+    handleUserToggle(tokenStart) {
+      var block = this.tm.getBlockByStart(tokenStart);
+      this.recordAction({
+        type: 'genericUndo',
+        details: {
+          tokenStart: block.start,
+          oldBlock: block,
+          timestamp: Date.now()
+        }
+      });
+      block.userHasToggled = !block.userHasToggled;
       this.save()
     },
     /**
@@ -333,12 +349,12 @@ export default {
             break;
           case 'symbolChange':
             this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldSymbolState);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldSymbolState);
             this.save();
             break;
           case 'genericUndo':
             this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldBlock.isSymbolActive);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.isSymbolActive);
             this.save();
             break;
         }

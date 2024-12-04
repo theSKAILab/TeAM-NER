@@ -119,8 +119,6 @@ export const mutations = {
               isSymbolActive: determineSymbolState(latestEntry[0]),
               ogNLP: thisAnnotationHistory[0][2] === "nlp",
             }
-
-            //[b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]
             annotationHistory.push(historyEntry);
 
             ////console.log("Loaded annotation history:", types);

@@ -1,5 +1,5 @@
 <template>
-  <mark :class="['bg-' + backgroundColor, {'shadow-unreviewed': !userHasToggled, 'bg-red': !token.humanOpinion}]">
+  <mark :class="['bg-' + backgroundColor, {'shadow-unreviewed': !this.userHasToggled, 'bg-red': !token.humanOpinion}]">
     <Token
       v-for="t in token.tokens"
       :key="t.start"
@@ -94,16 +94,15 @@ export default {
       });
     },
     toggleReviewed() {
-      this.recordAction('review-state', this.isReviewed);
-      this.isReviewed = !this.isReviewed;
-      this.userHasToggled = true;  // Set userHasToggled to true when review state is toggled
+      this.userHasToggled = !this.userHasToggled;
+      this.$emit('user-toggle', this.token.start);
     },
     recordAction(actionType, previousState) {
       const action = {
         type: actionType,
         tokenStart: this.token.start,
         previousState: previousState,
-        newState: this[actionType === 'symbol-state' ? 'isSymbolActive' : 'isReviewed'],
+        newState: this[actionType === 'symbol-state' ? 'isSymbolActive' : 'userHasToggled'],
         timestamp: Date.now()
       };
       this.$emit('record-undo', action);
