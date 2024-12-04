@@ -159,7 +159,6 @@ export default {
             this.$emit("text-file-loaded");
           }
           else if (fileType === "json") {
-            ////console.log("Emitting json-file-loaded");
             this.$emit("json-file-loaded");
           }
           else {
@@ -167,7 +166,6 @@ export default {
           }
         });
       } catch (e) {
-        ////console.log("Catch reached")
         this.fileSelectionError();
       }
     },

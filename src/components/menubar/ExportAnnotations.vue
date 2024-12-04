@@ -18,8 +18,6 @@ export default {
       const annotator = prompt('Please enter your name for the annotations export:');
       if (annotator) {
         this.generateJSONExport(annotator);
-      } else {
-        ////console.log('Export cancelled or name not provided.');
       }
     },
 
@@ -43,18 +41,9 @@ export default {
                 annotator,
                 entity.label, // The class or label from the entity
               ];
-              // Fixes duplicate entries in history (only add if no history OR state changes)
-              if (history.length == 0 && entity.status == "Accepted") {
-                history.push([
-                  "Candidate",
-                  this.formatDate(new Date()),
-                  annotator,
-                  entity.label, // The class or label from the entity
-                ])
-                history.push(newHistoryEntry); // add to file history
-              } else if ((entity.status == "Candidate" && history.length == 0) || (history[history.length-1][0] != entity.status))  {
-                history.push(newHistoryEntry); // add to file history
-              }
+              if (entity.userHasToggled && history[history.length-1][2] != annotator) history.push([history[history.length-1][0],this.formatDate(new Date()),annotator,history[history.length-1][3]]) //  Current reviewer "concurs" with previous reviewer and is not the same as previous reviewer
+                else if ((entity.status == "Candidate" || entity.status == "Suggested")&& history.length == 0)  history.push(newHistoryEntry); // New annotation in Annotate or Review mode
+                else if (history[history.length-1][0] != entity.status) history.push(newHistoryEntry); // Status change from previous entry in history
 
               return [
                 entity.start, // start position
@@ -69,7 +58,6 @@ export default {
       const jsonStr = JSON.stringify(output, null, 2); // Pretty print JSON
       try {
         await exportFile(jsonStr, `${annotator}-annotations.json`);
-        ////console.log("Export successful");
       } catch (error) {
         console.error("Export failed:", error);
       }

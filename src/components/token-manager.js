@@ -34,7 +34,7 @@ class TokenManager {
         if (!entityClass) {
           entityClass = {"name": entityName};
         }
-        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.history, false, annotation.isSymbolActive);
+        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.history, annotation.isSymbolActive);
       }
     }
   }
@@ -46,10 +46,10 @@ class TokenManager {
    * @param {Number} start 'start' value of the token forming the start of the token block
    * @param {Number} end 'start' value of the token forming the end of the token block
    * @param {Number} _class the id of the class to highlight
-   * @param {Boolean} isHumanOpinion Seperate nlp vs human made annotation
+   * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
 
    */
-  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, userHasToggled = true,isSymbolActive = 0) {
+  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, isSymbolActive = 0) {
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
@@ -102,11 +102,11 @@ class TokenManager {
           backgroundColor: _class.color || null,
           // Set these attributes for all token-blocks, updating existing blocks as needed
           initiallyNLP: updateAttributes ? initiallyNLP : false,
-          userHasToggled: true,
           isSymbolActive: isSymbolActive,
           isLoaded: isLoaded,
           status: status,
           annotationHistory: annotationHistory,
+          userHasToggled: false,
         };
         tokensArray.push(newBlock);
       }
@@ -172,6 +172,7 @@ class TokenManager {
           label: b.label,
           isSymbolActive: b.isSymbolActive,
           ogNLP: b.initiallyNLP,
+          userHasToggled: b.userHasToggled,
         }
         entities.push(historyEntry);
       }

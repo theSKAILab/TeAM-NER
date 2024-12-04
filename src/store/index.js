@@ -4,9 +4,7 @@ const niceColors = ["red-11", "blue-11", "light-green-11", "deep-orange-11", "pi
 
 export const mutations = {
   setCurrentPage(state, page) {
-    // ////console.log("From index.js, changing currentpage to", page)
     state.currentPage = page;
-    // ////console.log("From index.js, current page is now", state.currentPage)
   },
   addToUndoStack(state, { undoAction, actionDescription }) {
     state.undoStack.push({ undoAction, actionDescription });
@@ -22,7 +20,6 @@ export const mutations = {
     if (state.undoStack.length > 0) {
       const lastAction = state.undoStack.pop();
       lastAction.undoAction();
-      ////console.log(`Undid action: ${lastAction.actionDescription}`);
     } else {
       console.warn("Undo stack is empty.");
     }
@@ -119,11 +116,8 @@ export const mutations = {
               isSymbolActive: determineSymbolState(latestEntry[0]),
               ogNLP: thisAnnotationHistory[0][2] === "nlp",
             }
-
-            //[b.name, b.start, b.end, b.label, b.initiallyNLP, b.isSymbolActive, b.userHasToggled, b.isLoaded,b.status,b.annotationHistory]
             annotationHistory.push(historyEntry);
 
-            ////console.log("Loaded annotation history:", types);
           }
         });
         if (annotationEntities.entities.length) state.annotationHistory[i] = annotationHistory;
@@ -145,7 +139,6 @@ export const mutations = {
 
     // If the class already exists, return
     if (existingClass) {
-      ////console.log('Class already exists, returning.');
       return;
     }
 
@@ -164,7 +157,6 @@ export const mutations = {
       // If this is the first class, set it as the currentClass
       if (state.classes.length === 1) {
         state.currentClass = state.classes[0];
-        ////console.log('Updated currentClass:', state.currentClass);
       }
     }
   },

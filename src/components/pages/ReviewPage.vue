@@ -7,7 +7,7 @@
         :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
         @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState, $event.oldSymbolState)"
-        @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" />
+        @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" @user-toggle="handleUserToggle"/>
     </div>
     <div class="q-pa-md" style="border-top: 1px solid #ccc">
       <q-btn class="q-mx-sm" color="primary" outline title="Undo" @click="undo" label="Undo" />
@@ -17,8 +17,7 @@
         @click="resetBlocks" label="Reset" />
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
         title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
-      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
-        title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
+      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
     </div>
   </div>
 </template>
@@ -38,7 +37,6 @@ export default {
       currentSentence: {},
       redone: "",
       tokenizer: new TreebankTokenizer(),
-      addedTokensStack: [],
       undoStack: [],
     };
   },
@@ -116,7 +114,6 @@ export default {
      * @param {Object} action - The action to record
      */
     recordAction(action) {
-      ////console.log("Recording action:", action); // This will log the action being recorded
       this.undoStack.push(action);
       // Sort the undo stack by the timestamp to ensure the latest action is on top
       this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
@@ -138,7 +135,6 @@ export default {
           timestamp: Date.now()
         }
       });
-      console.log(this.undoStack)
 
       const token = this.tm.getTokenByStart(tokenStart);
       if (!token) {
@@ -148,10 +144,25 @@ export default {
 
       // Update the token's state and toggled status
       this.tm.updateSymbolState(tokenStart, newSymbolState);
-      const cases = ["Candidate", "Accepted", "Rejected"];
+      const cases = ["Candidate", "Accepted", "Rejected", "Suggested"];
       token.status = cases[newSymbolState];
-
-
+      this.save()
+    },
+    /**
+     * Handles user toggle state by saving and adding to undo stack
+     *  @param {Number} blockStart - The start position of the block to remove
+     */
+    handleUserToggle(tokenStart) {
+      var block = this.tm.getBlockByStart(tokenStart);
+      this.recordAction({
+        type: 'genericUndo',
+        details: {
+          tokenStart: block.start,
+          oldBlock: block,
+          timestamp: Date.now()
+        }
+      });
+      block.userHasToggled = !block.userHasToggled;
       this.save()
     },
     /**
@@ -173,11 +184,7 @@ export default {
       // Remove the existing block
       this.tm.removeBlock(blockStart);
       // Create a new block with the same start and end, but with the current tag/label/class
-      if (existingBlock.start !== undefined && existingBlock.end !== undefined) {
-        this.addedTokensStack.push(existingBlock.start);
-        this.tm.addNewBlock(existingBlock.start, existingBlock.end, this.currentClass);
-      }
-      console.log(this.undoStack)
+      this.tm.addNewBlock(existingBlock.start, existingBlock.end, this.currentClass, existingBlock.humanOpinion, existingBlock.initiallyNLP, existingBlock.isLoaded, existingBlock.name, existingBlock.status, existingBlock.annotationHistory, existingBlock.isSymbolActive);
       this.save();
     },
     /**
@@ -225,7 +232,6 @@ export default {
         start = parseInt(rangeStart.startContainer.parentElement.id.replace("t", ""));
         let offsetEnd = parseInt(rangeEnd.endContainer.parentElement.id.replace("t", ""));
         end = offsetEnd + rangeEnd.endOffset;
-        console.log(start)
         if (!isNaN(start) && !isNaN(end)) {
           if (!this.classes.length && selection.anchorNode) {
             alert(
@@ -234,9 +240,7 @@ export default {
             selection.empty();
             return;
           }
-          ////console.log("adding manual block ", start, end, this.currentClass);
-          this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "candidate", null, true);
-          this.addedTokensStack.push(start);
+          this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "Suggested", null, 3);
           this.recordAction({
             type: 'addBlock',
             details: {
@@ -249,11 +253,9 @@ export default {
           selection.empty();
           this.save();
         } else {
-          console.log("selected text were not tokens");
           selection.empty();
         }
       } catch {
-        ////console.log("selected text were not tokens");
         return;
       }  
     },
@@ -323,9 +325,15 @@ export default {
      */
     undo() {
       if (this.undoStack.length > 0) {
-        console.log(this.undoStack)
         const lastAction = this.undoStack.pop();
         var details = lastAction.details;
+        // REALLY GROSS FIX
+        // TODO: FIX EVENTUALLY
+        // Allows one undo for label changes when using Suggested
+        if (this.undoStack.length != 0 && this.undoStack[this.undoStack.length - 1].type == 'symbolChange' && this.undoStack[this.undoStack.length - 1].details.oldBlock.isSymbolActive == 3) {
+          details.oldBlock.isSymbolActive = this.undoStack[this.undoStack.length - 1].details.oldSymbolState
+          this.undoStack.pop()
+        }
         switch (lastAction.type) {
           case 'addBlock':
             this.tm.removeBlock(details.start);
@@ -333,12 +341,12 @@ export default {
             break;
           case 'symbolChange':
             this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldSymbolState);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected","Suggested"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldSymbolState);
             this.save();
             break;
           case 'genericUndo':
             this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldBlock.isSymbolActive);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected","Suggested"][details.oldBlock.isSymbolActive], details.oldBlock.annotationHistory, details.oldBlock.isSymbolActive);
             this.save();
             break;
         }
