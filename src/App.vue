@@ -85,19 +85,15 @@ export default {
   methods: {
     ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage"]),
     switchToPage(page) {
-      //console.log("Changing current page to", page)
       this.setCurrentPage(page);
-      //console.log("Current page is now", this.currentPage)
     },
     onDragEnter() {
-      //console.log("Here");
       this.overlayActive = true;
     },
     onDragLeave() {
       this.overlayActive = false;
     },
     onDrop(event) {
-      //console.log(event);
       this.overlayActive = false;
       this.pendingFileDrop = event.dataTransfer.files[0]
       if (this.currentPage == "start")  this.processFileDrop();
