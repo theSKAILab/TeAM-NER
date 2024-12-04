@@ -13,16 +13,16 @@
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
         title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
-        title="Go forward one sentence/paragraph" @click="saveTags" label="Next" />
+        title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
     </div>
   </div>
 </template>
 <script>
 import { mapState, mapMutations } from "vuex";
-import Token from "./blocks/Token";
-import TokenBlock from "./blocks/TokenBlock";
-import ClassesBlock from "./blocks/ClassesBlock.vue";
-import TokenManager from "./token-manager";
+import Token from "../blocks/Token";
+import TokenBlock from "../blocks/TokenBlock";
+import ClassesBlock from "../blocks/ClassesBlock.vue";
+import TokenManager from "../token-manager";
 import TreebankTokenizer from "treebank-tokenizer";
 
 export default {
@@ -93,12 +93,16 @@ export default {
   },
   methods: {
     ...mapMutations(["nextSentence", "previousSentence", "resetIndex"]),
+    /**
+     * Keyboard Control Function
+     * @param {KeyboardEvent} event - Callback from keypress event
+     */
     keypress(event) {
       if (!this.enableKeyboardShortcuts) {
         return
       }
       if (event.keyCode == 32) { // Space
-        this.saveTags();
+        this.save();
       } else if (event.keyCode == 39) { // right arrow
         this.skipCurrentSentence();
       } else if (event.keyCode == 37) { // left arrow
@@ -109,37 +113,17 @@ export default {
       // stop event from bubbling up
       event.stopPropagation()
     },
+    /**
+     * Add an action to the undo stack
+     * @param {Object} action - The action to record
+     */
     recordAction(action) {
       this.undoStack.push(action);
       this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
     },
-    applyAnnotationHistory() {
-      const annotationHistory = this.annotationHistory[this.currentIndex];
-      if (annotationHistory && annotationHistory.length > 0) {
-        annotationHistory.forEach((annotation) => {
-          const [labelName, start, end, , name, , ogNLP] = annotation;
-          const humanOpinion = name !== "nlp";
-          const _class = this.classes.find(cls => cls.name === labelName);
-          if (_class) {
-            this.tm.addNewBlock(start, end, _class, humanOpinion, ogNLP, true, name, status);
-          } else {
-            console.warn(`Label "${labelName}" not found in classes.`);
-          }
-        });
-
-        // New logic to adjust humanOpinion based on 'nlp' name
-        this.tm.tokens.forEach(token => {
-          if (token.type === "token-block") {
-            // Determine if this block's annotations came from 'nlp'
-            const isNLP = annotationHistory.some(annotation => {
-              const [, start, end, , name] = annotation;
-              return name === "nlp" && token.start === start && token.end === end;
-            });
-            token.humanOpinion = !isNLP;
-          }
-        });
-      }
-    },
+    /**
+     * Tokenizes the current sentence and sets the TokenManager
+     */
     tokenizeCurrentSentence() {
       this.currentSentence = this.inputSentences[this.currentIndex];
       this.currentAnnotation = this.annotations[this.currentIndex];
@@ -161,10 +145,10 @@ export default {
       let combined = tokens.map((t, i) => [spans[i][0], spans[i][1], t]);
       this.tm = new TokenManager(this.classes);
       this.tm.setTokensAndAnnotation(combined, this.currentAnnotation);
-
-      // Call applyAnnotationHistory after setting up tokens and annotations
-      this.applyAnnotationHistory();
     },
+    /**
+     * Adds a new block to the TokenManager based on the current selection
+     */
     selectTokens() {
       let selection = document.getSelection();
       if (
@@ -206,11 +190,20 @@ export default {
       selection.empty();
       this.save();
     },
+    // Callbacks for Token and TokenBlock components
+    /**
+     * Removes TokenBlock from the TokenManager
+     * @param {Number} blockStart - The start position of the block to remove
+     */
     onRemoveBlock(blockStart) {
       this.addToUndo(blockStart);
       this.tm.removeBlock(blockStart);
       this.save();
     },
+    /**
+     * Changes TokenBlock label in the TokenManager
+     * @param {Number} blockStart  - The start position of the block to change
+     */
     onReplaceBlockLabel(blockStart) {
       this.addToUndo(blockStart);
       // Get the start and end positions of the existing block before deleting it
@@ -228,31 +221,45 @@ export default {
       }
       this.save();
     },
+    // Navigation Functions (buttons on bottom)
+    /**
+     * Resets all blocks to original imported state
+     */
     resetBlocks() {
       this.tm.resetBlocks();
       this.undoStack = [];
       this.addedTokensStack = [];
       this.save();
     },
+    /**
+     * Goes back one sentence and re-tokenizes the sentence
+     */
     skipCurrentSentence() {
-      this.nextSentence();
-      this.tokenizeCurrentSentence();
-    },
-    backOneSentence() {
-      this.previousSentence();
-      this.tokenizeCurrentSentence();
-    },
-    saveTags() {
       this.save();
       this.nextSentence();
       this.tokenizeCurrentSentence();
     },
+    /**
+     * Goes back one sentence and re-tokenizes the sentence
+     */
+    backOneSentence() {
+      this.previousSentence();
+      this.tokenizeCurrentSentence();
+    },
+    /**
+     * Saves the current annotation to the store
+     */
     save() {
       this.$store.commit("addAnnotation", {
         text: this.currentSentence.text,
         entities: this.tm.exportAsAnnotation(),
       });
     },
+    // Undo Functions
+    /**
+     * Adds a TokenBlock to the Undo Stack (Generic Undo)
+     * @param {Number} tokenStart - The start position of the token to add to the undo stack
+     */
     addToUndo(tokenStart) {
       const block = this.tm.getBlockByStart(tokenStart);
       if (!block) {
@@ -268,6 +275,9 @@ export default {
         }
       });
     },
+    /**
+     * Undo the last action and remove from the undo stack
+     */
     undo() {
       if (this.undoStack.length > 0) {
         const lastAction = this.undoStack.pop();
