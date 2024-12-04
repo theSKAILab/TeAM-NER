@@ -18,7 +18,7 @@
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
         title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
-        title="Go forward one sentence/paragraph" @click="saveTags" label="Next" />
+        title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
     </div>
   </div>
 </template>
@@ -91,12 +91,16 @@ export default {
   },
   methods: {
     ...mapMutations(["nextSentence", "previousSentence", "resetIndex"]),
+    /**
+     * Keyboard Control Function
+     * @param {KeyboardEvent} event - Callback from keypress event
+     */
     keypress(event) {
       if (!this.enableKeyboardShortcuts) {
         return
       }
       if (event.keyCode == 32) { // Space
-        this.saveTags();
+        this.nextSentence();
       } else if (event.keyCode == 39) { // right arrow
         this.skipCurrentSentence();
       } else if (event.keyCode == 37) { // left arrow
@@ -107,12 +111,22 @@ export default {
       // stop event from bubbling up
       event.stopPropagation()
     },
+    /**
+     * Add an action to the undo stack
+     * @param {Object} action - The action to record
+     */
     recordAction(action) {
       ////console.log("Recording action:", action); // This will log the action being recorded
       this.undoStack.push(action);
       // Sort the undo stack by the timestamp to ensure the latest action is on top
       this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
     },
+    /**
+     * Updates the symbol state of a token
+     * @param {Number} tokenStart start position of the token
+     * @param {Number} newSymbolState new symbol state
+     * @param {Number} oldSymbolState old symbol state
+     */
     handleSymbolUpdate(tokenStart, newSymbolState, oldSymbolState) {
       const block = this.tm.getBlockByStart(tokenStart);
       this.recordAction({
@@ -140,11 +154,19 @@ export default {
 
       this.save()
     },
+    /**
+     * Removes TokenBlock from the TokenManager
+     * @param {Number} blockStart - The start position of the block to remove
+     */
     onRemoveBlock(tokenStart) {
       this.addToUndo(tokenStart)
       this.tm.removeBlock(tokenStart);
       this.save();
     },
+    /**
+     * Changes TokenBlock label in the TokenManager
+     * @param {Number} blockStart  - The start position of the block to change
+     */
     onReplaceBlockLabel(blockStart) {
       this.addToUndo(blockStart);
       const existingBlock = this.tm.getBlockByStart(blockStart);
@@ -158,52 +180,9 @@ export default {
       console.log(this.undoStack)
       this.save();
     },
-    addToUndo(tokenStart) {
-      const block = this.tm.getBlockByStart(tokenStart);
-      if (!block) {
-        console.error('Block not found for start:', tokenStart);
-        return;
-      }
-      this.recordAction({
-        type: 'genericUndo',
-        details: {
-          tokenStart: block.start,
-          oldBlock: block,
-          timestamp: Date.now()
-        }
-      });
-    },
-    undo() {
-      if (this.undoStack.length > 0) {
-        console.log(this.undoStack)
-        const lastAction = this.undoStack.pop();
-        var details = lastAction.details;
-        switch (lastAction.type) {
-          case 'addBlock':
-            this.tm.removeBlock(details.start);
-            this.save();
-            break;
-          case 'symbolChange':
-            this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldSymbolState);
-            this.save();
-            break;
-          case 'genericUndo':
-            this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldBlock.isSymbolActive);
-            this.save();
-            break;
-        }
-      }
-    },
-    determineSymbolState(status) {
-      switch (status) {
-        case "Accepted": return 1;
-        case "Rejected": return 2;
-        case "Candidate": return 0;
-        default: return 0; // Default to candidate if unrecognized status
-      }
-    },
+    /**
+     * Tokenizes the current sentence and sets the TokenManager
+     */
     tokenizeCurrentSentence() {
       this.currentSentence = this.inputSentences[this.currentIndex];
       this.currentAnnotation = this.annotations[this.currentIndex];
@@ -226,6 +205,9 @@ export default {
       this.tm = new TokenManager(this.classes);
       this.tm.setTokensAndAnnotation(combined, this.currentAnnotation);
     },
+    /**
+     * Adds a new block to the TokenManager based on the current selection
+     */
     selectTokens() {
       let selection = document.getSelection();
 
@@ -275,6 +257,10 @@ export default {
         return;
       }  
     },
+    // Navigation Functions (buttons on bottom)
+    /**
+     * Resets all blocks to original imported state
+     */
     resetBlocks() {
       this.resetIndex();
       for (var i = 0; i < this.inputSentences.length; i++) {
@@ -288,24 +274,75 @@ export default {
       this.undoStack = [];
       this.tokenizeCurrentSentence()
     },
+    /**
+     * Goes back one sentence and re-tokenizes the sentence
+     */
     skipCurrentSentence() {
-      this.nextSentence();
-      this.tokenizeCurrentSentence();
-    },
-    backOneSentence() {
-      this.previousSentence();
-      this.tokenizeCurrentSentence();
-    },
-    saveTags() {
       this.save();
       this.nextSentence();
       this.tokenizeCurrentSentence();
     },
+    /**
+     * Goes back one sentence and re-tokenizes the sentence
+     */
+    backOneSentence() {
+      this.previousSentence();
+      this.tokenizeCurrentSentence();
+    },
+    /**
+     * Saves the current annotation to the store
+     */
     save() {
       this.$store.commit("addAnnotation", {
         text: this.currentSentence.text,
         entities: this.tm.exportAsAnnotation(),
       });
+    },
+    // Undo Functions
+   /**
+     * Adds a TokenBlock to the Undo Stack (Generic Undo)
+     * @param {Number} tokenStart - The start position of the token to add to the undo stack
+     */
+    addToUndo(tokenStart) {
+      const block = this.tm.getBlockByStart(tokenStart);
+      if (!block) {
+        console.error('Block not found for start:', tokenStart);
+        return;
+      }
+      this.recordAction({
+        type: 'genericUndo',
+        details: {
+          tokenStart: block.start,
+          oldBlock: block,
+          timestamp: Date.now()
+        }
+      });
+    },
+    /**
+     * Undo the last action and remove from the undo stack
+     */
+    undo() {
+      if (this.undoStack.length > 0) {
+        console.log(this.undoStack)
+        const lastAction = this.undoStack.pop();
+        var details = lastAction.details;
+        switch (lastAction.type) {
+          case 'addBlock':
+            this.tm.removeBlock(details.start);
+            this.save();
+            break;
+          case 'symbolChange':
+            this.tm.removeBlock(details.tokenStart);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, ["Candidate","Accepted","Rejected"][details.oldSymbolState], details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldSymbolState);
+            this.save();
+            break;
+          case 'genericUndo':
+            this.tm.removeBlock(details.tokenStart);
+            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.userHasToggled, details.oldBlock.isSymbolActive);
+            this.save();
+            break;
+        }
+      }
     },
   },
 };
