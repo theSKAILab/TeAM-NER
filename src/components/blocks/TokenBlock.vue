@@ -10,8 +10,7 @@
         title="Change label to currently selected label"
         @click="changeClass" />
       <!-- Delete label button (X) -->
-      <q-btn icon="fa fa-times-circle" round flat size="xs" text-color="grey-7" title="Delete annotation"
-        @click.stop="recordActionAndEmit('remove-block', token.start)" />
+      <q-btn v-if="this.currentPage === 'annotate'" icon="fa fa-times-circle" round flat size="xs" text-color="grey-7" title="Delete annotation" @click.stop="recordActionAndEmit('remove-block', token.start)" />
       <q-btn v-if="this.currentPage === 'review'" :icon="reviewedIconClass" round flat size="xs" text-color="grey-9"
         title="Dark indicates that you have reviewed this annotation, light means you have not."
         @click.stop="toggleReviewed" />
