@@ -227,36 +227,31 @@ export default {
       const rangeStart = selection.getRangeAt(0);
       const rangeEnd = selection.getRangeAt(selection.rangeCount - 1);
       let start, end;
-      try {
-        start = parseInt(rangeStart.startContainer.parentElement.id.replace("t", ""));
-        let offsetEnd = parseInt(rangeEnd.endContainer.parentElement.id.replace("t", ""));
-        end = offsetEnd + rangeEnd.endOffset;
-        if (!isNaN(start) && !isNaN(end)) {
-          if (!this.classes.length && selection.anchorNode) {
-            alert(
-              "There are no Tags available. Kindly add some Tags before tagging."
-            );
-            selection.empty();
-            return;
-          }
-          this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "Suggested", null, 3);
-          this.recordAction({
-            type: 'addBlock',
-            details: {
-              start: start,
-              end: end,
-              _class: this.currentClass,
-              timestamp: Date.now()
-            }
-          });
+      start = parseInt(rangeStart.startContainer.parentElement.id.replace("t", ""));
+      let offsetEnd = parseInt(rangeEnd.endContainer.parentElement.id.replace("t", ""));
+      end = offsetEnd + rangeEnd.endOffset;
+      if (!isNaN(start) && !isNaN(end)) {
+        if (!this.classes.length && selection.anchorNode) {
+          alert(
+            "There are no Tags available. Kindly add some Tags before tagging."
+          );
           selection.empty();
-          this.save();
-        } else {
-          selection.empty();
+          return;
         }
-      } catch {
-        return;
-      }  
+
+        this.tm.addNewBlock(start, end, this.currentClass, true, false, false, "name", "Suggested", null, 3, "review");
+        this.recordAction({
+          type: 'addBlock',
+          details: {
+            start: start,
+            end: end,
+            _class: this.currentClass,
+            timestamp: Date.now()
+          }
+        });
+        this.save();
+      }
+      selection.empty();
     },
     // Navigation Functions (buttons on bottom)
     /**
@@ -298,6 +293,7 @@ export default {
         text: this.currentSentence.text,
         entities: this.tm.exportAsAnnotation(),
       });
+      console.log(this.$store.state.annotations);
     },
     // Undo Functions
    /**
