@@ -116,7 +116,12 @@ export const mutations = {
               isSymbolActive: determineSymbolState(latestEntry[0]),
               ogNLP: thisAnnotationHistory[0][2] === "nlp",
             }
-            annotationHistory.push(historyEntry);
+            if (historyEntry.isSymbolActive != 2) {
+              annotationHistory.push(historyEntry);
+            } else {
+              // If the status is "Rejected", add it to the rejected annotations
+              state.rejectedAnnotations.push(historyEntry);
+            }
 
           }
         });
@@ -232,6 +237,9 @@ export const mutations = {
     state.annotations = newAnnotations;
     state.currentAnnotation = state.annotations[state.currentIndex];
   },
+  addRejectedAnnotation(state, payload) {
+    state.rejectedAnnotations.push(payload);
+  }
 };
 
 export const getters = {};
@@ -263,6 +271,7 @@ export default {
     let tags = LocalStorage.getItem("tags");
     return {
       annotations: [],
+      rejectedAnnotations: [],
       annotationHistory: {},
       undoStack: [],
       classes: tags || [],

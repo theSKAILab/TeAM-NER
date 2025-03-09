@@ -6,6 +6,7 @@ class TokenManager {
   constructor(classes) {
     this.classes = classes
     this.tokens = []; // Initialize tokens array
+    this.rejectedAnnotations = []; // Initialize rejected annotations array
   }
 
   getTokenByStart(start) {
@@ -49,7 +50,8 @@ class TokenManager {
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
 
    */
-  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, isSymbolActive = 0) {
+  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, isSymbolActive = 0, page) {
+    console.log(page)
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
@@ -67,9 +69,11 @@ class TokenManager {
       } else if (currentToken.end >= selectionStart && currentToken.start < selectionEnd) {
         // token is inside the selection
         if (currentToken.type == "token-block") {
+          if (page == "review") {
+            this.rejectedAnnotations.push(currentToken);
+          }
           this.removeBlock(currentToken.start);
           i--
-      //    selectionEnd-=1
         } else if (currentToken.type == "token") {
           selectedTokens.push(currentToken);
         }
@@ -176,6 +180,21 @@ class TokenManager {
         }
         entities.push(historyEntry);
       }
+    }
+    for (let i = 0; i < this.rejectedAnnotations.length; i++) {
+      let b = this.rejectedAnnotations[i];
+      const historyEntry = {
+        start: b.start,
+        end: b.end,
+        history: b.annotationHistory,
+        status: "Rejected",
+        name: b.name,
+        label: b.label,
+        isSymbolActive: 2,
+        ogNLP: b.initiallyNLP,
+        userHasToggled: b.userHasToggled,
+      }
+      entities.push(historyEntry);
     }
     return entities;
   }
