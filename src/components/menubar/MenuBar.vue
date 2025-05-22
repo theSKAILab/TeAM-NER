@@ -7,7 +7,7 @@
         </q-avatar>
         <span class="q-ml-sm">
           <strong>
-            NER Annotator
+            TART
           </strong>
         </span>
       </div>
@@ -18,9 +18,6 @@
           </strong>
           <strong v-else-if="$store.state.currentPage === 'review'" style="color: rgb(255, 255, 128)">
             | Review Mode |
-          </strong>
-          <strong v-else style="color: rgb(207, 255, 207)">
-            | ISSUE WITH MENU BAR AND CURENT PAGE |
           </strong>
         </span>
       </div>
@@ -35,6 +32,10 @@
               <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
             </q-item>
             <export-annotations />
+            <q-item clickable v-close-popup @click="pendingClick = () => {this.setCurrentPage('start')}">
+              <q-item-section>Close File</q-item-section>
+              <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
+            </q-item>
           </q-list>
         </q-menu>
       </div>
@@ -49,7 +50,7 @@
               <q-item-section>Undo</q-item-section>
             </q-item>
             <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')">
-              <q-item-section>Reset Annotations</q-item-section>
+              <q-item-section>Undo All</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -150,7 +151,7 @@ export default {
     ...mapState(["annotations", "classes"]),
   },
   methods: {
-    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex"]),
+    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage"]),
     // Funtion that exports the tags to a JSON file
     exportTags: async function () {
       await exportFile(JSON.stringify(this.classes), "tags.json");
@@ -166,7 +167,7 @@ export default {
             `${this.classes.length} Tags imported successfully`,
             "positive"
           );
-        } catch (e) {
+        } catch (_) {
           this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
         }
       };
@@ -193,7 +194,7 @@ export default {
             `Annotations imported successfully`,
             "positive"
           );
-        } catch (e) {
+        } catch (_) {
           this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
         }
       };

@@ -9,14 +9,9 @@
   >
     <div :style="{'pointer-events': overlayActive ? 'none' : 'auto'}">
       <q-layout view="hHh lpR fFf">
-        <menu-bar v-if="currentPage !== 'start'" />
-
+        <menu-bar/>
         <q-page-container>
-          <start-page
-            v-if="currentPage === 'start'"
-            @text-file-loaded="switchToPage('annotate')"
-            @json-file-loaded="switchToPage('review')"
-          />
+          <start-page v-if="currentPage === 'start'" @text-file-loaded="switchToPage('annotate')" @json-file-loaded="switchToPage('review')"/>
           <annotation-page v-if="currentPage === 'annotate'" />
           <review-page v-if="currentPage === 'review'" />
         </q-page-container>
@@ -29,10 +24,9 @@
 
 <script>
 import MenuBar from "./components/menubar/MenuBar.vue";
-import StartPage from "./components/pages/StartPage.vue";
+import StartPage from "./components/pages/StartPageV2.vue";
 import AnnotationPage from "./components/pages/AnnotationPage.vue";
 import ReviewPage from "./components/pages/ReviewPage.vue";
-import AnnotationSidebar from "./components/sidebar/AnnotationSidebar.vue";
 import DragNDropOverlay from "./components/etc/DragNDropOverlay.vue";
 import ExitDialog from "./components/etc/ExitDialog.vue";
 import { mapState, mapMutations } from "vuex";
@@ -71,7 +65,6 @@ export default {
     StartPage,
     AnnotationPage,
     ReviewPage,
-    AnnotationSidebar,
     DragNDropOverlay,
     ExitDialog
   },
