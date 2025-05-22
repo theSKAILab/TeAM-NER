@@ -1,19 +1,14 @@
 <template>
   <div>
     <classes-block />
-    <div class="q-pa-lg" style="height:60vh; overflow-y:scroll;">
+    <div class="q-pa-lg" style="height: calc(100vh - 190px); overflow-y:scroll;">
       <component :is="t.type === 'token' ? 'Token' : 'TokenBlock'" v-for="t in tm.tokens" :key="t.start" :token="t"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion" @remove-block="onRemoveBlock"
         @replace-block-label="onReplaceBlockLabel" />
     </div>
-    <div class="q-pa-md" style="border-top: 1px solid #ccc">
-      <q-btn class="q-mx-sm" color="primary" outline title="Undo" @click="undo" label="Undo" />
-      <q-btn color="red" outline class="q-mx-sm" title="Delete all annotations for all sentences/paragraphs"
-        @click="resetBlocks" label="Reset" />
-      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
-        title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
-      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
-        title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
+    <div class="q-pa-md" style="height: 50px;">
+      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
+      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" style="position: absolute; right: 16px;"/>
     </div>
   </div>
 </template>
@@ -86,6 +81,15 @@ export default {
     this.resetIndex();
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
+
+    // Emits
+    this.emitter.on('undo', () => {
+      this.undo();
+    });
+
+    this.emitter.on('reset-annotations', () => {
+      this.resetBlocks();
+    });
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);

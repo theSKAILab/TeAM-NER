@@ -20,7 +20,7 @@
             | Review Mode |
           </strong>
           <strong v-else style="color: rgb(207, 255, 207)">
-            | ISSUE WITH MENU BAR AND CURENT PAGE  |
+            | ISSUE WITH MENU BAR AND CURENT PAGE |
           </strong>
         </span>
       </div>
@@ -31,94 +31,42 @@
         <q-menu style="border-radius: 0.5rem;">
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup @click="pendingClick = $refs.file">
-              <q-item-section>Open File</q-item-section>
-              <input
-                @change="openFile"
-                type="file"
-                ref="file"
-                accept=".txt"
-                style="display: none"
-              />
+              <q-item-section>Open</q-item-section>
+              <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
             </q-item>
-          </q-list>
-        </q-menu>
-      </div>
-
-      <div class="q-ml-md cursor-pointer non-selectable">
-        <span>
-          Annotations
-        </span>
-        <q-menu style="border-radius: 0.5rem;">
-          <q-list dense style="min-width: 100px">
             <export-annotations />
-            <q-item clickable v-close-popup @click="pendingClick = $refs.file">
-              <q-item-section>Import</q-item-section>
-              <input
-                @change="importAnnotations"
-                type="file"
-                ref="file"
-                accept=".json"
-                style="display: none"
-              />
-            </q-item>
           </q-list>
         </q-menu>
       </div>
 
       <div class="q-ml-md cursor-pointer non-selectable">
         <span>
-          Tags
+          Edit
         </span>
         <q-menu style="border-radius: 0.5rem;">
           <q-list dense style="min-width: 100px">
-            <q-item clickable v-close-popup @click="exportTags()">
-              <q-item-section>Export</q-item-section>
+            <q-item clickable v-close-popup @click="this.emitter.emit('undo')">
+              <q-item-section>Undo</q-item-section>
             </q-item>
-            <q-item clickable v-close-popup @click="$refs.file.click()">
-              <q-item-section>Import</q-item-section>
-              <input
-                @change="importTags"
-                type="file"
-                ref="file"
-                accept=".json"
-                style="display: none"
-              />
+            <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')">
+              <q-item-section>Reset Annotations</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
       </div>
-
-      <q-space />
-
-      <q-icon
-        style="margin-top: 5px"
-        color="white"
-        :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'"
-        class="cursor-pointer"
-        @click="toggleDarkMode"
-      />
 
       <div class="q-ml-md cursor-pointer non-selectable">
         <span>Help</span>
 
         <q-menu style="border-radius: 0.5rem;">
           <q-list dense style="min-width: 100px">
-            <q-item
-              clickable
-              v-close-popup
-              href="https://github.com/tecoholic/ner-annotator/discussions"
-              target="_blank"
-            >
+            <q-item clickable v-close-popup href="https://github.com/tecoholic/ner-annotator/discussions"
+              target="_blank">
               <q-item-section>
                 Forum
               </q-item-section>
             </q-item>
-            <q-item
-              clickable
-              v-close-popup
-              href="https://github.com/tecoholic/ner-annotator/issues"
-              target="_blank"
-            >
+            <q-item clickable v-close-popup href="https://github.com/tecoholic/ner-annotator/issues" target="_blank">
               Report Issue
             </q-item>
             <q-separator />
@@ -130,6 +78,12 @@
 
         <about-dialog :show="showAbout" @hide="showAbout = false" />
       </div>
+
+      <q-space />
+
+      <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'"
+        class="cursor-pointer" @click="toggleDarkMode" />
+
     </div>
   </q-header>
 
@@ -140,12 +94,7 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-input
-          dense
-          v-model="newProjectName"
-          autofocus
-          @keyup.enter="promptForProject = false"
-        />
+        <q-input dense v-model="newProjectName" autofocus @keyup.enter="promptForProject = false" />
       </q-card-section>
 
       <q-card-actions align="right" class="text-primary">
@@ -155,7 +104,7 @@
     </q-card>
   </q-dialog>
 
-  <exit-dialog :show="pendingClick != null" @hide="pendingClick = null" @confirm="pendingClick.click()"/>
+  <exit-dialog :show="pendingClick != null" @hide="pendingClick = null" @confirm="pendingClick.click()" />
 </template>
 
 <script>
@@ -189,12 +138,12 @@ export default {
       },
     };
   },
-  data: function() {
+  data: function () {
     return {
       promptForProject: false,
       newProjectName: "",
       showAbout: false,
-      pendingClick: null,
+      pendingClick: null
     };
   },
   computed: {
@@ -203,10 +152,10 @@ export default {
   methods: {
     ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex"]),
     // Funtion that exports the tags to a JSON file
-    exportTags: async function() {
+    exportTags: async function () {
       await exportFile(JSON.stringify(this.classes), "tags.json");
     },
-    importTags: function(e) {
+    importTags: function (e) {
       let file = e.target.files[0];
       let filereader = new FileReader();
       filereader.onload = (ev) => {
@@ -223,7 +172,7 @@ export default {
       };
       filereader.readAsText(file);
     },
-    openFile: function(e) {
+    openFile: function (e) {
       let file = e.target.files[0];
       let filereader = new FileReader();
       filereader.onload = (ev) => {
@@ -233,7 +182,7 @@ export default {
       filereader.readAsText(file);
       this.resetIndex();
     },
-    importAnnotations: function(e) {
+    importAnnotations: function (e) {
       let file = e.target.files[0];
       let filereader = new FileReader();
       filereader.onload = (ev) => {
@@ -250,7 +199,7 @@ export default {
       };
       filereader.readAsText(file);
     },
-    toggleDarkMode: function() {
+    toggleDarkMode: function () {
       this.$q.dark.toggle();
     },
   },

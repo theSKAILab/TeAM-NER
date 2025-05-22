@@ -1,22 +1,16 @@
 <template>
-
   <div>
     <classes-block />
-    <div class="q-pa-lg" style="height:60vh; overflow-y:scroll;">
+    <div class="q-pa-lg" style="height:100%; overflow-y:scroll;">
       <component :is="t.type === 'token' ? 'Token' : 'TokenBlock'" v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
         :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
         @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState, $event.oldSymbolState)"
         @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" @user-toggle="handleUserToggle"/>
     </div>
-    <div class="q-pa-md" style="border-top: 1px solid #ccc">
-      <q-btn class="q-mx-sm" color="primary" outline title="Undo" @click="undo" label="Undo" />
-    </div>
-    <div class="q-pa-md" style="border-top: 1px solid #ccc">
-      <q-btn color="red" outline class="q-mx-sm" title="Delete all annotations for all sentences/paragraphs"
-        @click="resetBlocks" label="Reset" />
-      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline
-        title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
+    <div class="q-pa-md" style="width: 100%; border-top: 1px solid #ccc">
+      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
+      <q-space/>      
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
     </div>
   </div>
@@ -37,7 +31,7 @@ export default {
       currentSentence: {},
       redone: "",
       tokenizer: new Tokenizer(),
-      undoStack: [],
+      undoStack: []
     };
   },
   components: {
@@ -82,6 +76,15 @@ export default {
     }
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
+
+    // Emits
+    this.emitter.on('undo', () => {
+      this.undo();
+    });
+
+    this.emitter.on('reset-annotations', () => {
+      this.resetBlocks();
+    })
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);
