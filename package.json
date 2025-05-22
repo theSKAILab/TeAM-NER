@@ -5,7 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
+    "lint": "eslint",
     "test": "jest",
     "knip": "knip"
   },
@@ -35,8 +35,12 @@
     "vuex": "^4.1.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.27.0",
     "@types/node": "^22.15.21",
     "@vue/cli-service": "^5.0.8",
+    "eslint": "^9.27.0",
+    "eslint-plugin-vue": "^10.1.0",
+    "globals": "^16.1.0",
     "jest": "^29.7.0",
     "knip": "^5.57.1",
     "typescript": "^5.8.3"

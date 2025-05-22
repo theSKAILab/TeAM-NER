@@ -1,17 +1,16 @@
 <template>
   <div>
     <classes-block />
-    <div class="q-pa-lg" style="height:100%; overflow-y:scroll;">
+    <div class="q-pa-lg" style="height: calc(100vh - 190px); overflow-y:scroll;">
       <component :is="t.type === 'token' ? 'Token' : 'TokenBlock'" v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
         :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
         @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState)"
         @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" @user-toggle="handleUserToggle"/>
     </div>
-    <div class="q-pa-md" style="width: 100%; border-top: 1px solid #ccc">
+    <div class="q-pa-md" style="height: 50px;">
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
-      <q-space/>      
-      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
+      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" style="position: absolute; right: 16px;"/>
     </div>
   </div>
 </template>
