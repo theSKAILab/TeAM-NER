@@ -1,84 +1,15 @@
 <template>
   <q-header bordered>
-      <div class="q-pa-sm q-pl-md row items-center">
-
-        <!-- File -->
-        <div class="cursor-pointer non-selectable">
-          <span class="q-menu-open-button">
-            File
-          </span>
-          <q-menu>
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup @click="$store.state.currentPage != 'start'? pendingOpen = $refs.file: $refs.file.click()">
-                <q-item-section>Open...</q-item-section>
-                <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
-              </q-item>
-              <export-annotations />
-              <q-item clickable v-close-popup @click="pendingClose = true;" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section >Close</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </div>
-
-        <!-- Edit -->
-        <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button">
-            Edit
-          </span>
-          <q-menu>
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup @click="this.emitter.emit('undo')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>Undo</q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>Undo All</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </div>
-
-        <!-- Annotator -->
-        <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button">
-            Annotator
-          </span>
-          <q-menu>
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup @click="() => {$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>Change Mode</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </div>
-
-        <!-- Help -->
-        <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button">Help</span>
-          <q-menu>
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup href="https://github.com/theSKAILab/TeAM-NER/issues" target="_blank">
-                Report Issue
-              </q-item>
-              <q-item clickable v-close-popup @click="showAbout = true">
-                <q-item-section>About</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-
-          <about-dialog :show="showAbout" @hide="showAbout = false" />
-        </div>
-
-        <q-space />
-
-        <div class="q-ml-md q-mr-lg cursor-pointer non-selectable" v-if="installablePWA">
-          <span class="q-menu-open-button" @click="deferredPrompt.prompt()">
-                Install Application
-          </span>
-        </div>
-
-        <!-- Theme Mode Switch -->
-        <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
+    <div class="q-pa-sm q-pl-md row items-center">
+      <div>
+        <q-avatar size="xs">
+          <img src="@/assets/icon_32.png" />
+        </q-avatar>
+        <span class="q-ml-sm">
+          <strong>
+            TART
+          </strong>
+        </span>
       </div>
       <div>
         <span class="q-ml-sm">
@@ -87,9 +18,6 @@
           </strong>
           <strong v-else-if="$store.state.currentPage === 'review'" style="color: rgb(255, 255, 128)">
             | Review Mode |
-          </strong>
-          <strong v-else style="color: rgb(207, 255, 207)">
-            | ISSUE WITH MENU BAR AND CURENT PAGE |
           </strong>
         </span>
       </div>
@@ -104,6 +32,10 @@
               <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
             </q-item>
             <export-annotations />
+            <q-item clickable v-close-popup @click="pendingClick = () => {this.setCurrentPage('start')}">
+              <q-item-section>Close File</q-item-section>
+              <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
+            </q-item>
           </q-list>
         </q-menu>
       </div>
@@ -118,7 +50,7 @@
               <q-item-section>Undo</q-item-section>
             </q-item>
             <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')">
-              <q-item-section>Reset Annotations</q-item-section>
+              <q-item-section>Undo All</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -231,7 +163,7 @@ export default {
     ...mapState(["annotations", "classes","fileName","lastSavedTimestamp"]),
   },
   methods: {
-    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex"]),
+    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage"]),
     // Funtion that exports the tags to a JSON file
     exportTags: async function () {
       await exportFile(JSON.stringify(this.classes), "tags.json");
@@ -247,7 +179,7 @@ export default {
             `${this.classes.length} Tags imported successfully`,
             "positive"
           );
-        } catch (e) {
+        } catch (_) {
           this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
         }
       };
@@ -274,7 +206,7 @@ export default {
             `Annotations imported successfully`,
             "positive"
           );
-        } catch (e) {
+        } catch (_) {
           this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
         }
       };
