@@ -49,7 +49,7 @@
               <q-item-section>Undo</q-item-section>
             </q-item>
             <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')">
-              <q-item-section>Reset Annotations</q-item-section>
+              <q-item-section>Undo All</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -166,7 +166,7 @@ export default {
             `${this.classes.length} Tags imported successfully`,
             "positive"
           );
-        } catch (e) {
+        } catch (_) {
           this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
         }
       };
@@ -193,7 +193,7 @@ export default {
             `Annotations imported successfully`,
             "positive"
           );
-        } catch (e) {
+        } catch (_) {
           this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
         }
       };
