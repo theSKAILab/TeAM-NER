@@ -1,24 +1,17 @@
 <template>
   <div>
     <classes-block />
-    <div class="q-pa-lg" style="height: calc(100vh - 190px); overflow-y:scroll;">
+    <div class="q-pa-lg" style="height:100%; overflow-y:scroll;">
       <component :is="t.type === 'token' ? 'Token' : 'TokenBlock'" v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
         :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
         :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
         @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState)"
         @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" @user-toggle="handleUserToggle"/>
     </div>
-    <div class="q-pa-md" style="height: 50px;">
+    <div class="q-pa-md" style="width: 100%; border-top: 1px solid #ccc">
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
-      <div style="display: inline-block;margin-left: 15px;">
-        <span>{{ this.$store.state.currentPage.charAt(0).toUpperCase() + this.$store.state.currentPage.slice(1) }} Mode</span>
-        <span class="q-pl-md">{{ this.$store.fileName }}</span>
-        <span class="q-pl-md">{{ getWordCount(this.inputSentences[currentIndex].text) }} Words</span>
-        <span class="q-pl-md">{{ getCharCount(this.inputSentences[currentIndex].text) }} Characters</span>
-        <span class="q-pl-md">{{ this.annotations[currentIndex].entities.length }} Annotations</span>
-        <span class="q-pl-xl" v-if="this.$store.lastSavedTimestamp != null" style="text-align: right;position: absolute; right: 110px;">Auto Saved at {{ this.$store.lastSavedTimestamp }}</span>
-      </div>
-      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" :disabled="currentIndex == this.inputSentences.length - 1" label="Next" style="position: absolute; right: 16px;"/>
+      <q-space/>      
+      <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go forward one sentence/paragraph" @click="skipCurrentSentence" label="Next" />
     </div>
   </div>
 </template>
@@ -38,6 +31,7 @@ export default {
       currentSentence: {},
       redone: "",
       tokenizer: new Tokenizer(),
+      undoStack: []
     };
   },
   components: {
@@ -86,8 +80,13 @@ export default {
     document.addEventListener('keydown', this.keypress);
 
     // Emits
-    this.emitter.on('undo', this.undo);
-    this.emitter.on('reset-annotations',  this.resetBlocks);
+    this.emitter.on('undo', () => {
+      this.undo();
+    });
+
+    this.emitter.on('reset-annotations', () => {
+      this.resetBlocks();
+    })
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);
