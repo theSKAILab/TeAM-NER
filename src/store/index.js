@@ -6,6 +6,28 @@ const mutations = {
   setCurrentPage(state, page) {
     state.currentPage = page;
   },
+  addToUndoStack(state, { undoAction, actionDescription }) {
+    state.undoStack.push({ undoAction, actionDescription });
+  },
+  undoAction(state, action) {
+    // This mutation will dynamically call other mutations based on action.type and action.payload
+    if (action && typeof action.type === "string" && typeof this._mutations[action.type] === "function") {
+      this._mutations[action.type][0](state, action.payload);
+    }
+  },
+  // Mutation to undo the last action
+  undoLastAction(state) {
+    if (state.undoStack.length > 0) {
+      const lastAction = state.undoStack.pop();
+      lastAction.undoAction();
+    } else {
+      console.warn("Undo stack is empty.");
+    }
+  },
+  // Mutation to clear the undo stack
+  clearUndoStack(state) {
+    state.undoStack = [];
+  },
   loadClasses(state, payload) {
     if (!Array.isArray(payload)) {
       throw new Error("loadClasses: payload must be an array");
@@ -98,15 +120,6 @@ const mutations = {
        mutations.loadClasses(state, file.classes);
     }
   },
-  // TODO: REPLACE HELPER FUNCTIONS SPREAD THRU CODE WITH THIS
-  determineSymbolState(status) {
-      switch (status) {
-        case "Accepted": return 1;
-        case "Rejected": return 2;
-        case "Candidate": return 0;
-        default: return 0; // Default to candidate if unrecognized status
-      }
-  },
   addClass(state, payload) {
     // Check if the class already exists
     const existingClass = state.classes.find((c) => c.name === payload);
@@ -190,24 +203,6 @@ const mutations = {
     state.undoStack.push(newUndo);
     state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
   },
-  addUndoDelete(state, removedBlock) {
-    var newUndo = {
-      type: "create",
-      oldBlock: removedBlock,
-    };
-    state.undoStack.push(newUndo);
-    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
-  },
-  addUndoUpdate(state, oldBlock) {
-    // on action side, deletes block and adds back old block in place
-    // differs from delete in that it expects no blocks to be there
-    var newUndo = {
-      type: "update",
-      oldBlock: oldBlock
-    };
-    state.undoStack.push(newUndo);
-    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
-  }
 };
 
 const getters = {};
@@ -253,9 +248,7 @@ export default {
       currentClass: (tags && tags[0]) || {},
       currentIndex: 0,
       currentSentence: "",
-      currentPage: "start",
-      fileName: "",
-      lastSavedTimestamp: null,
+      currentPage: "start"
     };
   },
   getters,
