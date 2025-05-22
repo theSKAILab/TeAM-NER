@@ -27,7 +27,7 @@ import Token from "../blocks/Token";
 import TokenBlock from "../blocks/TokenBlock";
 import ClassesBlock from "../blocks/ClassesBlock.vue";
 import TokenManager from "../token-manager";
-import TreebankTokenizer from "treebank-tokenizer";
+import Tokenizer from "../tokenizer/tokenizer";
 
 export default {
   name: "ReviewPage",
@@ -36,7 +36,7 @@ export default {
       tm: new TokenManager([]),
       currentSentence: {},
       redone: "",
-      tokenizer: new TreebankTokenizer(),
+      tokenizer: new Tokenizer(),
       undoStack: [],
     };
   },

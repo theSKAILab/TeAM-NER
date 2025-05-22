@@ -130,7 +130,7 @@ export const mutations = {
         return { id: i, text: annotationText };
       });
       state.originalText = processedTexts.map((item) => item.text).join(state.separator);
-      state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s.replaceAll("."," .") }));
+      state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
 
       if (jsonData.classes && Array.isArray(jsonData.classes)) {
         mutations.loadClasses(state, jsonData.classes);
