@@ -2,7 +2,7 @@ import { LocalStorage } from "quasar";
 
 const niceColors = ["red-11", "blue-11", "light-green-11", "deep-orange-11", "pink-11", "light-blue-11", "lime-11", "brown-11", "purple-11", "cyan-11", "yellow-11", "grey-11", "deep-purple-11", "teal-11", "amber-11", "blue-grey-11", "indigo-11", "green-11", "orange-11"];
 
-export const mutations = {
+const mutations = {
   setCurrentPage(state, page) {
     state.currentPage = page;
   },
@@ -24,12 +24,10 @@ export const mutations = {
       console.warn("Undo stack is empty.");
     }
   },
-
   // Mutation to clear the undo stack
   clearUndoStack(state) {
     state.undoStack = [];
   },
-
   loadClasses(state, payload) {
     if (!Array.isArray(payload)) {
       throw new Error("loadClasses: payload must be an array");
@@ -137,7 +135,6 @@ export const mutations = {
       }
     }
   },
-
   addClass(state, payload) {
     // Check if the class already exists
     const existingClass = state.classes.find((c) => c.name === payload);
@@ -165,7 +162,6 @@ export const mutations = {
       }
     }
   },
-
   removeClass(state, payload) {
     state.classes = state.classes.filter((c) => c.id != payload);
     if (state.currentClass.id === payload) {
@@ -237,12 +233,9 @@ export const mutations = {
     state.annotations = newAnnotations;
     state.currentAnnotation = state.annotations[state.currentIndex];
   },
-  addRejectedAnnotation(state, payload) {
-    state.rejectedAnnotations.push(payload);
-  }
 };
 
-export const getters = {};
+const getters = {};
 
 const actions = {
   createNewClass({ commit, state }, className) {
@@ -285,7 +278,7 @@ export default {
       currentClass: (tags && tags[0]) || {},
       currentIndex: 0,
       currentSentence: "",
-      currentPage: "start",
+      currentPage: "start"
     };
   },
   getters,

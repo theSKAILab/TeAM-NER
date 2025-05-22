@@ -11,10 +11,6 @@
       <q-layout view="hHh lpR fFf">
         <menu-bar v-if="currentPage !== 'start'" />
 
-        <q-drawer :model-value="currentPage !== 'start'" bordered :class="$q.dark.isActive ? 'bg-dark' : 'bg-grey-2'">
-          <annotation-sidebar />
-        </q-drawer>
-
         <q-page-container>
           <start-page
             v-if="currentPage === 'start'"
