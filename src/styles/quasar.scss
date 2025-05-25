@@ -47,41 +47,12 @@ body.body--dark {
 
 .q-menu {
   box-shadow: none;
-  border: 1px solid $grey-5;
+  border: 0.1rem solid $grey-5;
   border-radius: 0px !important;
-  margin-top: 9px !important;
+  margin-top: 10px !important;
 }
 
 .menu-file-picker {
   font-size: 14px !important; 
   color: rgb(0,0,0) !important;
-}
-
-.disabled {
-  color: gray;
-  pointer-events: none;
-}
-
-.titlebar {
-  height: 30px;
-  background: #329ea3;
-  user-select: none;
-  display: flex;
-  justify-content: flex-end;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-}
-.titlebar-button {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  width: 30px;
-  height: 30px;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.titlebar-button:hover {
-  background: #5bbec3;
 }

@@ -22,29 +22,28 @@
         </span>
       </div>
       <div class="q-ml-md cursor-pointer non-selectable">
-        <span>
+        <span class="q-menu-open-button">
           File
         </span>
-        <q-menu style="border-radius: 0.5rem;">
+        <q-menu>
           <q-list dense style="min-width: 100px">
-            <q-item clickable v-close-popup @click="pendingClick = $refs.file">
+            <q-item clickable v-close-popup @click="$store.state.currentPage != 'start'? pendingOpen = $refs.file: $refs.file.click()">
               <q-item-section>Open</q-item-section>
-              <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
+              <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
             </q-item>
             <export-annotations />
-            <q-item clickable v-close-popup @click="pendingClick = () => {this.setCurrentPage('start')}">
+            <q-item clickable v-close-popup @click="pendingClose = true;">
               <q-item-section>Close File</q-item-section>
-              <input @change="openFile" type="file" ref="file" accept=".txt" style="display: none" />
             </q-item>
           </q-list>
         </q-menu>
       </div>
 
       <div class="q-ml-md cursor-pointer non-selectable">
-        <span>
+        <span class="q-menu-open-button">
           Edit
         </span>
-        <q-menu style="border-radius: 0.5rem;">
+        <q-menu>
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup @click="this.emitter.emit('undo')">
               <q-item-section>Undo</q-item-section>
@@ -57,9 +56,9 @@
       </div>
 
       <div class="q-ml-md cursor-pointer non-selectable">
-        <span>Help</span>
+        <span class="q-menu-open-button">Help</span>
 
-        <q-menu style="border-radius: 0.5rem;">
+        <q-menu>
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup href="https://github.com/tecoholic/ner-annotator/discussions"
               target="_blank">
@@ -105,7 +104,8 @@
     </q-card>
   </q-dialog>
 
-  <exit-dialog :show="pendingClick != null" @hide="pendingClick = null" @confirm="pendingClick.click()" />
+  <open-dialog :show="pendingOpen != null" @hide="pendingOpen = null" @confirm="pendingOpen.click()" />
+  <exit-dialog :show="pendingClose != null" @hide="pendingClose = null" @confirm="() => {this.setCurrentPage('start')}" />
 </template>
 
 <script>
@@ -115,7 +115,6 @@ import { useQuasar } from "quasar";
 import AboutDialog from "../etc/AboutDialog.vue";
 import ExitDialog from "../etc/ExitDialog.vue";
 import OpenDialog from "../etc/OpenDialog.vue";
-import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 export default {
   components: { ExportAnnotations, AboutDialog, ExitDialog, OpenDialog },
@@ -156,7 +155,8 @@ export default {
       promptForProject: false,
       newProjectName: "",
       showAbout: false,
-      pendingClick: null
+      pendingClose: null,
+      pendingOpen: null,
     };
   },
   computed: {
@@ -185,15 +185,43 @@ export default {
       };
       filereader.readAsText(file);
     },
-    openFile: function (e) {
-      let file = e.target.files[0];
-      let filereader = new FileReader();
-      filereader.onload = (ev) => {
-        this.setInputSentences(ev.target.result);
-        this.clearAllAnnotations();
-      };
-      filereader.readAsText(file);
-      this.resetIndex();
+    onFileSelected(file) {
+      // onFileSelected() is called if the user clicks and manually
+      //    selects a file. If they drag and drop, that is handled in
+      //    App.vue. If you modify this function, you may also want to
+      //    modify App#onDrop(), App#processFileDrop(), and
+      //    LoadTextFile#onFileSelected() to match
+      file = file.target.files[0];
+      let fileType = file.name.split('.').pop();
+      try {
+        let reader = new FileReader();
+        reader.readAsText(file);
+        reader.addEventListener("load", (event) => {
+          this.clearAllAnnotations();
+          this.setInputSentences(event.target.result);
+          if (fileType === "txt") {
+            this.$emit("text-file-loaded");
+          }
+          else if (fileType === "json") {
+            this.$emit("json-file-loaded");
+          }
+          else {
+            alert('Please upload either a .txt or a .json file.');
+          }
+        });
+      } catch (e) {
+        this.fileSelectionError();
+      }
+    },
+    fileSelectionError() {
+      this.$q.notify({
+        icon: "fas fa-exclamation-circle",
+        message: "Invalid file",
+        color: "red-6",
+        position: "top",
+        timeout: 2000,
+        actions: [{label: "Dismiss", color: "white"}],
+      });
     },
     importAnnotations: function (e) {
       let file = e.target.files[0];
