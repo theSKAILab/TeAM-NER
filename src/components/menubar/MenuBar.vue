@@ -21,6 +21,7 @@
           </strong>
         </span>
       </div>
+      
       <div class="q-ml-md cursor-pointer non-selectable">
         <span class="q-menu-open-button">
           File
@@ -60,16 +61,9 @@
 
         <q-menu>
           <q-list dense style="min-width: 100px">
-            <q-item clickable v-close-popup href="https://github.com/tecoholic/ner-annotator/discussions"
-              target="_blank">
-              <q-item-section>
-                Forum
-              </q-item-section>
-            </q-item>
-            <q-item clickable v-close-popup href="https://github.com/tecoholic/ner-annotator/issues" target="_blank">
+            <q-item clickable v-close-popup href="https://github.com/theSKAILab/TeAM-NER/issues" target="_blank">
               Report Issue
             </q-item>
-            <q-separator />
             <q-item clickable v-close-popup @click="showAbout = true">
               <q-item-section>About</q-item-section>
             </q-item>

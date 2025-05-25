@@ -2,21 +2,21 @@
   <q-dialog :model-value="show" @hide="$emit('hide')">
     <q-card style="min-width: 400px; padding: 10px; border-radius: 10px">
       <q-card-section>
-        <div class="text-h6">NER Annotator</div>
+        <div class="text-h6">TART Tool</div>
       </q-card-section>
 
       <q-card-section class="q-pt-none">
         <p><strong>Version: </strong>{{ version }}</p>
         <p>
           <strong>Source: </strong>
-          <a href="https://github.com/tecoholic/ner-annotator">
-            Github Repository
-          </a>
+          Adapted from <a href="https://github.com/tecoholic/ner-annotator" target="_blank">NER Annotator</a> into <a href="https://github.com/theSKAILab/TeAM-NER" target="_blank">TART Tool</a>
         </p>
         <p>
-          <strong>Author:</strong>
-          @tecoholic (<a href="https://github.com/tecoholic">Github</a>,
-          <a href="https://github.com/tecoholic">Twitter</a>)
+          <strong>Author:</strong><br/>
+          Original Author @tecoholic (<a href="https://github.com/tecoholic" target="_blank">Github</a>, <a href="https://github.com/tecoholic" target="_blank">Twitter</a>)<br/>
+          Adapted by @theSKAILab Team (<a href="https://github.com/theSKAILab" target="_blank">Github</a>)<br/>
+          <span style="padding-left: 25px;">Nicholas Pease (<a href="https://github.com/npease18" target="_blank">Github</a>, <a href="https://nicholaspease.com" target="_blank">Website</a>)</span><br/>
+          <span style="padding-left: 25px;">Umayer Reza (<a href="https://github.com/umayerr" target="_blank">Github</a>)</span>
         </p>
       </q-card-section>
 
