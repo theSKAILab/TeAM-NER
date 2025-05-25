@@ -48,6 +48,11 @@ body.body--dark {
 .q-menu {
   box-shadow: none;
   border: 0.1rem solid $grey-5;
-  border-radius: 0.75rem;
-  margin-top: 0.2rem !important;
+  border-radius: 0px !important;
+  margin-top: 10px !important;
+}
+
+.menu-file-picker {
+  font-size: 14px !important; 
+  color: rgb(0,0,0) !important;
 }

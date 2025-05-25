@@ -9,7 +9,7 @@
   >
     <div :style="{'pointer-events': overlayActive ? 'none' : 'auto'}">
       <q-layout view="hHh lpR fFf">
-        <menu-bar/>
+        <menu-bar @text-file-loaded="switchToPage('annotate')" @json-file-loaded="switchToPage('review')"/>
         <q-page-container>
           <start-page v-if="currentPage === 'start'" @text-file-loaded="switchToPage('annotate')" @json-file-loaded="switchToPage('review')"/>
           <annotation-page v-if="currentPage === 'annotate'" />
@@ -24,7 +24,7 @@
 
 <script>
 import MenuBar from "./components/menubar/MenuBar.vue";
-import StartPage from "./components/pages/StartPageV2.vue";
+import StartPage from "./components/pages/StartPage.vue";
 import AnnotationPage from "./components/pages/AnnotationPage.vue";
 import ReviewPage from "./components/pages/ReviewPage.vue";
 import DragNDropOverlay from "./components/etc/DragNDropOverlay.vue";
