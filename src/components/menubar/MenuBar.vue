@@ -21,7 +21,7 @@
           </strong>
         </span>
       </div>
-      
+
       <div class="q-ml-md cursor-pointer non-selectable">
         <span class="q-menu-open-button">
           File
@@ -29,12 +29,12 @@
         <q-menu>
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup @click="$store.state.currentPage != 'start'? pendingOpen = $refs.file: $refs.file.click()">
-              <q-item-section>Open</q-item-section>
+              <q-item-section>Open...</q-item-section>
               <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
             </q-item>
             <export-annotations />
-            <q-item clickable v-close-popup @click="pendingClose = true;">
-              <q-item-section>Close File</q-item-section>
+            <q-item clickable v-close-popup @click="pendingClose = true;" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+              <q-item-section >Close</q-item-section>
             </q-item>
           </q-list>
         </q-menu>
@@ -46,10 +46,10 @@
         </span>
         <q-menu>
           <q-list dense style="min-width: 100px">
-            <q-item clickable v-close-popup @click="this.emitter.emit('undo')">
+            <q-item clickable v-close-popup @click="this.emitter.emit('undo')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
               <q-item-section>Undo</q-item-section>
             </q-item>
-            <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')">
+            <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
               <q-item-section>Undo All</q-item-section>
             </q-item>
           </q-list>
