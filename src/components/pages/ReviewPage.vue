@@ -11,7 +11,8 @@
     <div class="q-pa-md" style="height: 50px;">
       <q-btn class="q-mx-sm" :color="$q.dark.isActive ? 'grey-3' : 'grey-9'" outline title="Go back one sentence/paragraph" @click="backOneSentence" :disabled="currentIndex == 0" label="Back" />
       <div style="display: inline-block;margin-left: 15px;">
-        <span>{{ this.$store.fileName }}</span>
+        <span>{{ this.$store.state.currentPage.charAt(0).toUpperCase() + this.$store.state.currentPage.slice(1) }} Mode</span>
+        <span class="q-pl-md">{{ this.$store.fileName }}</span>
         <span class="q-pl-md">{{ getWordCount(this.inputSentences[currentIndex].text) }} Words</span>
         <span class="q-pl-md">{{ getCharCount(this.inputSentences[currentIndex].text) }} Characters</span>
         <span class="q-pl-md">{{ this.annotations[currentIndex].entities.length }} Annotations</span>
