@@ -57,8 +57,20 @@
       </div>
 
       <div class="q-ml-md cursor-pointer non-selectable">
-        <span class="q-menu-open-button">Help</span>
+        <span class="q-menu-open-button">
+          Annotator
+        </span>
+        <q-menu>
+          <q-list dense style="min-width: 100px">
+            <q-item clickable v-close-popup @click="() => {$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+              <q-item-section>Change Mode</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </div>
 
+      <div class="q-ml-md cursor-pointer non-selectable">
+        <span class="q-menu-open-button">Help</span>
         <q-menu>
           <q-list dense style="min-width: 100px">
             <q-item clickable v-close-popup href="https://github.com/theSKAILab/TeAM-NER/issues" target="_blank">
@@ -75,28 +87,9 @@
 
       <q-space />
 
-      <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'"
-        class="cursor-pointer" @click="toggleDarkMode" />
-
+      <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
     </div>
   </q-header>
-
-  <q-dialog v-model="promptForProject" persistent>
-    <q-card style="min-width: 350px">
-      <q-card-section>
-        <div class="text-h6">Project Name</div>
-      </q-card-section>
-
-      <q-card-section class="q-pt-none">
-        <q-input dense v-model="newProjectName" autofocus @keyup.enter="promptForProject = false" />
-      </q-card-section>
-
-      <q-card-actions align="right" class="text-primary">
-        <q-btn flat label="Cancel" v-close-popup />
-        <q-btn flat label="Create Project" v-close-popup />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
 
   <open-dialog :show="pendingOpen != null" @hide="pendingOpen = null" @confirm="pendingOpen.click()" />
   <exit-dialog :show="pendingClose != null" @hide="pendingClose = null" @confirm="() => {this.setCurrentPage('start')}" />
@@ -186,7 +179,9 @@ export default {
       //    modify App#onDrop(), App#processFileDrop(), and
       //    LoadTextFile#onFileSelected() to match
       file = file.target.files[0];
+      this.$store.fileName = file.name;
       let fileType = file.name.split('.').pop();
+      this.$store.lastSavedTimestamp = null;
       try {
         let reader = new FileReader();
         reader.readAsText(file);
