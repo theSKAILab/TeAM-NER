@@ -27,7 +27,6 @@ const mutations = {
           // If successful, continue with the JSON data processing
         } catch (jsonError) {
           payload = payload.replace(/(\r\n|\n|\r){2,}/gm, "\n"); // Turn multiple newlines into a single newline
-          console.log(payload)
           // If JSON parsing fails, assume it's a text file and proceed to read its content
           jsonData = {
             annotations: [[payload, { entities: [] }]],
@@ -245,7 +244,9 @@ export default {
       currentClass: (tags && tags[0]) || {},
       currentIndex: 0,
       currentSentence: "",
-      currentPage: "start"
+      currentPage: "start",
+      fileName: "",
+      lastSavedTimestamp: null,
     };
   },
   getters,
