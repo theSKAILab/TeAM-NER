@@ -1,7 +1,7 @@
 
 <template>
-  <q-item clickable v-close-popup @click="promptForNameAndExport()">
-    <q-item-section>Save</q-item-section>
+  <q-item clickable v-close-popup @click="promptForNameAndExport()" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+    <q-item-section>Save...</q-item-section>
   </q-item>
 </template>
 <script>
