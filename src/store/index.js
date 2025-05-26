@@ -6,28 +6,6 @@ const mutations = {
   setCurrentPage(state, page) {
     state.currentPage = page;
   },
-  addToUndoStack(state, { undoAction, actionDescription }) {
-    state.undoStack.push({ undoAction, actionDescription });
-  },
-  undoAction(state, action) {
-    // This mutation will dynamically call other mutations based on action.type and action.payload
-    if (action && typeof action.type === "string" && typeof this._mutations[action.type] === "function") {
-      this._mutations[action.type][0](state, action.payload);
-    }
-  },
-  // Mutation to undo the last action
-  undoLastAction(state) {
-    if (state.undoStack.length > 0) {
-      const lastAction = state.undoStack.pop();
-      lastAction.undoAction();
-    } else {
-      console.warn("Undo stack is empty.");
-    }
-  },
-  // Mutation to clear the undo stack
-  clearUndoStack(state) {
-    state.undoStack = [];
-  },
   loadClasses(state, payload) {
     if (!Array.isArray(payload)) {
       throw new Error("loadClasses: payload must be an array");
@@ -48,6 +26,8 @@ const mutations = {
           jsonData = JSON.parse(payload);
           // If successful, continue with the JSON data processing
         } catch (jsonError) {
+          payload = payload.replace(/(\r\n|\n|\r){2,}/gm, "\n"); // Turn multiple newlines into a single newline
+          console.log(payload)
           // If JSON parsing fails, assume it's a text file and proceed to read its content
           jsonData = {
             annotations: [[payload, { entities: [] }]],
