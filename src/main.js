@@ -7,6 +7,7 @@ import mitt from "mitt";
 
 import { Quasar } from "quasar";
 import quasarUserOptions from "./quasar-user-options";
+import './registerServiceWorker'
 
 const app = createApp(App)
     .use(Quasar, quasarUserOptions)
