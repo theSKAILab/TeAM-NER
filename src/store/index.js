@@ -109,6 +109,17 @@ const mutations = {
       state.originalText = processedTexts.map((item) => item.text).join(state.separator);
       state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
 
+      for (var i = 0; i < state.inputSentences.length; i++) {
+        payload = {
+          text: state.inputSentences[i].text,
+          entities: {},
+        }
+        state.annotations[state.currentIndex] = payload;
+        state.currentAnnotation = payload
+        state.currentIndex++;
+      }
+      state.currentIndex = 0;
+
       if (jsonData.classes && Array.isArray(jsonData.classes)) {
         mutations.loadClasses(state, jsonData.classes);
       }

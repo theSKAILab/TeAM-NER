@@ -79,7 +79,6 @@ export default {
   },
   created() {
     // Add blocks for all paragraphs
-    this.resetBlocks()
     if (this.inputSentences.length) {
       this.tokenizeCurrentSentence()
     }
