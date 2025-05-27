@@ -2,34 +2,10 @@ import { LocalStorage } from "quasar";
 
 const niceColors = ["red-11", "blue-11", "light-green-11", "deep-orange-11", "pink-11", "light-blue-11", "lime-11", "brown-11", "purple-11", "cyan-11", "yellow-11", "grey-11", "deep-purple-11", "teal-11", "amber-11", "blue-grey-11", "indigo-11", "green-11", "orange-11"];
 
-export const mutations = {
+const mutations = {
   setCurrentPage(state, page) {
     state.currentPage = page;
   },
-  addToUndoStack(state, { undoAction, actionDescription }) {
-    state.undoStack.push({ undoAction, actionDescription });
-  },
-  undoAction(state, action) {
-    // This mutation will dynamically call other mutations based on action.type and action.payload
-    if (action && typeof action.type === "string" && typeof this._mutations[action.type] === "function") {
-      this._mutations[action.type][0](state, action.payload);
-    }
-  },
-  // Mutation to undo the last action
-  undoLastAction(state) {
-    if (state.undoStack.length > 0) {
-      const lastAction = state.undoStack.pop();
-      lastAction.undoAction();
-    } else {
-      console.warn("Undo stack is empty.");
-    }
-  },
-
-  // Mutation to clear the undo stack
-  clearUndoStack(state) {
-    state.undoStack = [];
-  },
-
   loadClasses(state, payload) {
     if (!Array.isArray(payload)) {
       throw new Error("loadClasses: payload must be an array");
@@ -50,6 +26,7 @@ export const mutations = {
           jsonData = JSON.parse(payload);
           // If successful, continue with the JSON data processing
         } catch (jsonError) {
+          payload = payload.replace(/(\r\n|\n|\r){2,}/gm, "\n"); // Turn multiple newlines into a single newline
           // If JSON parsing fails, assume it's a text file and proceed to read its content
           jsonData = {
             annotations: [[payload, { entities: [] }]],
@@ -137,7 +114,6 @@ export const mutations = {
       }
     }
   },
-
   addClass(state, payload) {
     // Check if the class already exists
     const existingClass = state.classes.find((c) => c.name === payload);
@@ -165,7 +141,6 @@ export const mutations = {
       }
     }
   },
-
   removeClass(state, payload) {
     state.classes = state.classes.filter((c) => c.id != payload);
     if (state.currentClass.id === payload) {
@@ -237,12 +212,9 @@ export const mutations = {
     state.annotations = newAnnotations;
     state.currentAnnotation = state.annotations[state.currentIndex];
   },
-  addRejectedAnnotation(state, payload) {
-    state.rejectedAnnotations.push(payload);
-  }
 };
 
-export const getters = {};
+const getters = {};
 
 const actions = {
   createNewClass({ commit, state }, className) {
@@ -286,6 +258,8 @@ export default {
       currentIndex: 0,
       currentSentence: "",
       currentPage: "start",
+      fileName: "",
+      lastSavedTimestamp: null,
     };
   },
   getters,

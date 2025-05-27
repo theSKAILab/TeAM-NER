@@ -9,6 +9,11 @@ module.exports = {
       importStrategy: "kebab",
       rtlSupport: false,
     },
+    pwa: {
+      name: "Text Annotation Review and Tagging (TART)",
+      themeColor: '#027be3',
+      msTileColor: '#027be3',
+    }
   },
 
   configureWebpack: (config) => {

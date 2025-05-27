@@ -1,6 +1,17 @@
 class Tokenizer {
     constructor() {
-        this.regex = /\w+|\$[\d\.]+|\S+/gm;
+        // This is the regex used for tokenization, changing this will change the behavior of the groupings of words and symbols
+
+        // Explanation of the regex used for tokenization:
+        // First Part: [\w\-\'\"\[\]\(\)]+
+            // This part matches any combination of word characters (letters, digits, and underscores), hyphens, single quotes, double quotes, square brackets, and parentheses.
+            // The + sign means it will match one or more of these characters in a row.
+        // Second Part: \$[\d\.\S]
+            // This part matches a dollar sign $ followed by any digit, a period, or any non-whitespace character.
+        // Third Part: \S
+            // This part matches any single non-whitespace character.
+
+        this.regex = /[\w\-\'\"\[\]\(\)]+|\$[\d\.\S]|\S/gm; 
     }
 
     tokenize(text) {
