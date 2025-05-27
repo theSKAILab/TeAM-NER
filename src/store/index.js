@@ -18,31 +18,13 @@ const mutations = {
     state.currentClass = state.classes[0];
     LocalStorage.set("tags", state.classes);
   },
-  setInputSentences(state, payload) {
-      let jsonData;
-      if (typeof payload === "string") {
-        // Check if the payload is a JSON string
-        try {
-          jsonData = JSON.parse(payload);
-          // If successful, continue with the JSON data processing
-        } catch (jsonError) {
-          payload = payload.replace(/(\r\n|\n|\r){2,}/gm, "\n"); // Turn multiple newlines into a single newline
-          // If JSON parsing fails, assume it's a text file and proceed to read its content
-          jsonData = {
-            annotations: [[payload, { entities: [] }]],
-            classes: [], // You may need to provide some default values here based on your needs
-          };
-        }
-      } else if (payload instanceof File) {
-        // If the payload is a File (assumed to be a text file), read its content
-        const fileReader = new FileReader();
-        fileReader.onload = function (event) {
-          try {
-            const fileContent = event.target.result;
-            jsonData = {
-              annotations: [[fileContent, { entities: [] }]],
-              classes: [], // You may need to provide some default values here based on your needs
-            };
+  loadFile(state, payload) {
+    // Clear Out Data
+    state.annotations = [];
+    state.currentAnnotation = {};
+    state.classes = [];
+    state.currentClass = null;
+    this.undoStack = [];
 
     var file = payload;
     if (this.fileName.split(".")[1] == "json") {
@@ -103,30 +85,27 @@ const mutations = {
         }
     }
 
-        return { id: i, text: annotationText };
-      });
-      state.originalText = processedTexts.map((item) => item.text).join(state.separator);
-      state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
-
-      for (var i = 0; i < state.inputSentences.length; i++) {
-        payload = {
-          text: state.inputSentences[i].text,
-          entities: {},
-        }
-        state.annotations[state.currentIndex] = payload;
-        state.currentAnnotation = payload
-        state.currentIndex++;
-      }
-      state.currentIndex = 0;
-
-      if (jsonData.classes && Array.isArray(jsonData.classes)) {
-        mutations.loadClasses(state, jsonData.classes);
+    state.originalText = file.annotations.map((item) => item[0]).join(state.separator);
+    state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
+    state.annotations = file.annotations.map((sentence) => {
+      return {
+        text: sentence[0],
+        entities: sentence[1].entities,
       }
     })
 
     if (file.classes && Array.isArray(file.classes)) {
        mutations.loadClasses(state, file.classes);
     }
+  },
+  // TODO: REPLACE HELPER FUNCTIONS SPREAD THRU CODE WITH THIS
+  determineSymbolState(status) {
+      switch (status) {
+        case "Accepted": return 1;
+        case "Rejected": return 2;
+        case "Candidate": return 0;
+        default: return 0; // Default to candidate if unrecognized status
+      }
   },
   addClass(state, payload) {
     // Check if the class already exists
@@ -211,6 +190,24 @@ const mutations = {
     state.undoStack.push(newUndo);
     state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
   },
+  addUndoDelete(state, removedBlock) {
+    var newUndo = {
+      type: "create",
+      oldBlock: removedBlock,
+    };
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
+  },
+  addUndoUpdate(state, oldBlock) {
+    // on action side, deletes block and adds back old block in place
+    // differs from delete in that it expects no blocks to be there
+    var newUndo = {
+      type: "update",
+      oldBlock: oldBlock
+    };
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
+  }
 };
 
 const getters = {};

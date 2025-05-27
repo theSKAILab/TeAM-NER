@@ -38,7 +38,6 @@ export default {
       currentSentence: {},
       redone: "",
       tokenizer: new Tokenizer(),
-      undoStack: []
     };
   },
   components: {
@@ -57,7 +56,8 @@ export default {
       "enableKeyboardShortcuts",
       "annotationPrecision",
       "fileName",
-      "lastSavedTimestamp"
+      "lastSavedTimestamp",
+      "undoStack"
     ])
   },
   watch: {
@@ -86,13 +86,8 @@ export default {
     document.addEventListener('keydown', this.keypress);
 
     // Emits
-    this.emitter.on('undo', () => {
-      this.undo();
-    });
-
-    this.emitter.on('reset-annotations', () => {
-      this.resetBlocks();
-    })
+    this.emitter.on('undo', this.undo);
+    this.emitter.on('reset-annotations',  this.resetBlocks);
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);
@@ -286,16 +281,13 @@ export default {
         entities: this.tm.exportAsAnnotation(),
       });
       this.$store.lastSavedTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      console.log(this.$store.state.annotations);
     },
     getWordCount(text) {
-      console.log(text)
       if (text == null) return 0;
       let words = text.split(/\s+/).filter((word) => word.length > 0);
       return words.length;
     },
     getCharCount(text) {
-      console.log(text)
       if (text == null) return 0;
       return text.length;
     },

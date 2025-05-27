@@ -132,34 +132,16 @@ export default {
       pendingOpen: null,
     };
   },
+  created() {
+    document.addEventListener('keydown', this.menuKeyBind);
+  },
   computed: {
     ...mapState(["annotations", "classes","fileName","lastSavedTimestamp"]),
   },
   methods: {
-    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage"]),
-    // Funtion that exports the tags to a JSON file
+    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage","loadFile"]),
     getCurrentWebview() {
       return getCurrentWebview();
-    },
-    exportTags: async function () {
-      await exportFile(JSON.stringify(this.classes), "tags.json");
-    },
-    importTags: function (e) {
-      let file = e.target.files[0];
-      let filereader = new FileReader();
-      filereader.onload = (ev) => {
-        try {
-          this.loadClasses(JSON.parse(ev.target.result));
-          this.notify(
-            "fa fa-check",
-            `${this.classes.length} Tags imported successfully`,
-            "positive"
-          );
-        } catch (_) {
-          this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
-        }
-      };
-      filereader.readAsText(file);
     },
     onFileSelected(file) {
       // onFileSelected() is called if the user clicks and manually
@@ -176,7 +158,8 @@ export default {
         reader.readAsText(file);
         reader.addEventListener("load", (event) => {
           this.clearAllAnnotations();
-          this.setInputSentences(event.target.result);
+          this.loadFile(event.target.result);
+
           if (fileType === "txt") {
             this.$emit("text-file-loaded");
           }
@@ -188,35 +171,15 @@ export default {
           }
         });
       } catch (e) {
-        this.fileSelectionError();
+        this.$q.notify({
+          icon: "fas fa-exclamation-circle",
+          message: "Invalid file",
+          color: "red-6",
+          position: "top",
+          timeout: 2000,
+          actions: [{label: "Dismiss", color: "white"}],
+        });
       }
-    },
-    fileSelectionError() {
-      this.$q.notify({
-        icon: "fas fa-exclamation-circle",
-        message: "Invalid file",
-        color: "red-6",
-        position: "top",
-        timeout: 2000,
-        actions: [{label: "Dismiss", color: "white"}],
-      });
-    },
-    importAnnotations: function (e) {
-      let file = e.target.files[0];
-      let filereader = new FileReader();
-      filereader.onload = (ev) => {
-        try {
-          this.loadAnnotations(JSON.parse(ev.target.result));
-          this.notify(
-            "fa fa-check",
-            `Annotations imported successfully`,
-            "positive"
-          );
-        } catch (_) {
-          this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
-        }
-      };
-      filereader.readAsText(file);
     },
     toggleDarkMode: function () {
       this.$q.dark.toggle();
