@@ -1,27 +1,8 @@
 <template>
   <q-header bordered>
       <div class="q-pa-sm q-pl-md row items-center">
-        <!-- <div>
-          <q-avatar size="xs">
-            <img src="@/assets/icon_32.png" />
-          </q-avatar>
-          <span class="q-ml-sm">
-            <strong>
-              TART
-            </strong>
-          </span>
-        </div>
-        <div>
-          <span class="q-ml-sm">
-            <strong v-if="$store.state.currentPage === 'annotate'" style="color: rgb(207, 255, 207)">
-              | Annotation Mode |
-            </strong>
-            <strong v-else-if="$store.state.currentPage === 'review'" style="color: rgb(255, 255, 128)">
-              | Review Mode |
-            </strong>
-          </span>
-        </div> -->
 
+        <!-- File -->
         <div class="cursor-pointer non-selectable">
           <span class="q-menu-open-button">
             File
@@ -40,6 +21,7 @@
           </q-menu>
         </div>
 
+        <!-- Edit -->
         <div class="q-ml-md cursor-pointer non-selectable">
           <span class="q-menu-open-button">
             Edit
@@ -56,6 +38,7 @@
           </q-menu>
         </div>
 
+        <!-- Annotator -->
         <div class="q-ml-md cursor-pointer non-selectable">
           <span class="q-menu-open-button">
             Annotator
@@ -69,6 +52,7 @@
           </q-menu>
         </div>
 
+        <!-- Help -->
         <div class="q-ml-md cursor-pointer non-selectable">
           <span class="q-menu-open-button">Help</span>
           <q-menu>
@@ -87,6 +71,7 @@
 
         <q-space />
 
+        <!-- Theme Mode Switch -->
         <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
       </div>
   </q-header>

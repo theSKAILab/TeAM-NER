@@ -80,6 +80,14 @@ export default {
     if (this.inputSentences.length) {
       this.tokenizeCurrentSentence()
     }
+    // Add blocks for all paragraphs
+    // for (var i = 0; i < this.inputSentences.length; i++) {
+    //   this.$store.commit("addAnnotation", {
+    //     text: this.inputSentences[i].text,
+    //     entities: {},
+    //   });
+    //   this.nextSentence();
+    // }
 
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
