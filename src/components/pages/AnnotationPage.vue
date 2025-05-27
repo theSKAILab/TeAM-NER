@@ -37,7 +37,6 @@ export default {
       redone: "",
       tokenizer: new Tokenizer(),
       addedTokensStack: [],
-      undoStack: [],
     };
   },
   components: {
@@ -56,7 +55,8 @@ export default {
       "enableKeyboardShortcuts",
       "annotationPrecision",
       "fileName",
-      "lastSavedTimestamp"
+      "lastSavedTimestamp",
+      "undoStack"
     ]),
   },
   watch: {
@@ -77,36 +77,26 @@ export default {
     }
   },
   created() {
+
     if (this.inputSentences.length) {
       this.tokenizeCurrentSentence()
     }
-    // Add blocks for all paragraphs
-    // for (var i = 0; i < this.inputSentences.length; i++) {
-    //   this.$store.commit("addAnnotation", {
-    //     text: this.inputSentences[i].text,
-    //     entities: {},
-    //   });
-    //   this.nextSentence();
-    // }
 
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
 
     // Emits
-    this.emitter.on('undo', () => {
-      this.undo();
-    });
-
-    this.emitter.on('reset-annotations', () => {
-      this.resetBlocks();
-    });
+    this.emitter.on('undo', this.undo);
+    this.emitter.on('reset-annotations',  this.resetBlocks);
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);
     document.removeEventListener("keydown", this.keypress);
+    this.emitter.off('undo', this.undo);
+    this.emitter.off('reset-annotations',  this.resetBlocks);
   },
   methods: {
-    ...mapMutations(["nextSentence", "previousSentence", "resetIndex"]),
+    ...mapMutations(["nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate"]),
     /**
      * Keyboard Control Function
      * @param {KeyboardEvent} event - Callback from keypress event
@@ -126,14 +116,6 @@ export default {
       }
       // stop event from bubbling up
       event.stopPropagation()
-    },
-    /**
-     * Add an action to the undo stack
-     * @param {Object} action - The action to record
-     */
-    recordAction(action) {
-      this.undoStack.push(action);
-      this.undoStack.sort((a, b) => b.timestamp - a.timestamp);
     },
     /**
      * Tokenizes the current sentence and sets the TokenManager
@@ -191,15 +173,7 @@ export default {
       }
       this.tm.addNewBlock(start, end, this.currentClass, true, false);
       this.addedTokensStack.push(start);
-      this.recordAction({
-        type: 'addBlock',
-        details: {
-          start: start,
-          end: end,
-          _class: this.currentClass,
-          timestamp: Date.now()
-        }
-      });
+      this.addUndoCreate(this.tm.getBlockByStart(start));
       selection.empty();
       this.save();
     },
@@ -209,7 +183,7 @@ export default {
      * @param {Number} blockStart - The start position of the block to remove
      */
     onRemoveBlock(blockStart) {
-      this.addToUndo(blockStart);
+      this.addUndoDelete(this.tm.getBlockByStart(blockStart));
       this.tm.removeBlock(blockStart);
       this.save();
     },
@@ -218,7 +192,7 @@ export default {
      * @param {Number} blockStart  - The start position of the block to change
      */
     onReplaceBlockLabel(blockStart) {
-      this.addToUndo(blockStart);
+      this.addUndoUpdate(this.tm.getBlockByStart(blockStart));
       // Get the start and end positions of the existing block before deleting it
       const existingBlock = this.tm.getBlockByStart(blockStart);
       const start = existingBlock.start;
@@ -239,8 +213,7 @@ export default {
      * Resets all blocks to original imported state
      */
     resetBlocks() {
-      this.tm.resetBlocks();
-      this.undoStack = [];
+      while(this.undoStack.length > 0) { this.undo();}
       this.addedTokensStack = [];
       this.save();
     },
@@ -270,35 +243,13 @@ export default {
       this.$store.lastSavedTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
     getWordCount(text) {
-      console.log(text)
       if (text == null) return 0;
       let words = text.split(/\s+/).filter((word) => word.length > 0);
       return words.length;
     },
     getCharCount(text) {
-      console.log(text)
       if (text == null) return 0;
       return text.length;
-    },
-    // Undo Functions
-    /**
-     * Adds a TokenBlock to the Undo Stack (Generic Undo)
-     * @param {Number} tokenStart - The start position of the token to add to the undo stack
-     */
-    addToUndo(tokenStart) {
-      const block = this.tm.getBlockByStart(tokenStart);
-      if (!block) {
-        console.error('Block not found for start:', tokenStart);
-        return;
-      }
-      this.recordAction({
-        type: 'genericUndo',
-        details: {
-          tokenStart: block.start,
-          oldBlock: block,
-          timestamp: Date.now()
-        }
-      });
     },
     /**
      * Undo the last action and remove from the undo stack
@@ -306,16 +257,18 @@ export default {
     undo() {
       if (this.undoStack.length > 0) {
         const lastAction = this.undoStack.pop();
-        var details = lastAction.details;
         switch (lastAction.type) {
-          case 'addBlock':
-            this.tm.removeBlock(details.start);
+          case 'remove':
+            this.tm.removeBlock(lastAction.start);
             this.save();
             break;
-          case 'genericUndo':
-            this.tm.removeBlock(details.tokenStart);
-            this.tm.addNewBlock(details.oldBlock.start, details.oldBlock.end, this.classes.find(c => c.name == details.oldBlock.label), details.oldBlock.humanOpinion, details.oldBlock.initiallyNLP, details.oldBlock.isLoaded, details.oldBlock.name, details.oldBlock.status, details.oldBlock.annotationHistory, details.oldBlock.isSymbolActive);
+          case 'create':
+            this.tm.addNewBlock(lastAction.oldBlock.start, lastAction.oldBlock.end, this.classes.find(c => c.name == lastAction.oldBlock.label), lastAction.oldBlock.humanOpinion, lastAction.oldBlock.initiallyNLP, lastAction.oldBlock.isLoaded, lastAction.oldBlock.name, lastAction.oldBlock.status, lastAction.oldBlock.annotationHistory, lastAction.oldBlock.isSymbolActive);
             this.save();
+            break;
+          case 'update':
+            this.tm.removeBlock(lastAction.oldBlock.start);
+            this.tm.addNewBlock(lastAction.oldBlock.start, lastAction.oldBlock.end, this.classes.find(c => c.name == lastAction.oldBlock.label), lastAction.oldBlock.humanOpinion, lastAction.oldBlock.initiallyNLP, lastAction.oldBlock.isLoaded, lastAction.oldBlock.name, lastAction.oldBlock.status, lastAction.oldBlock.annotationHistory, lastAction.oldBlock.isSymbolActive);
             break;
         }
       }

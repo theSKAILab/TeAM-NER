@@ -24,7 +24,6 @@ class TokenManager {
       isSymbolActive: 0, // Default humanOpinion to true for all initial tokens
     }));
     this.words = tokens.map(t => t[2]);
-
     if (currentAnnotation != undefined) {
       // reset previous annotation state
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
@@ -51,7 +50,6 @@ class TokenManager {
 
    */
   addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, isSymbolActive = 0, page) {
-    console.log(page)
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
