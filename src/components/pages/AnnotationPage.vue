@@ -55,7 +55,8 @@ export default {
       "enableKeyboardShortcuts",
       "annotationPrecision",
       "fileName",
-      "lastSavedTimestamp"
+      "lastSavedTimestamp",
+      "undoStack"
     ]),
   },
   watch: {
@@ -80,26 +81,13 @@ export default {
     if (this.inputSentences.length) {
       this.tokenizeCurrentSentence()
     }
-    // Add blocks for all paragraphs
-    // for (var i = 0; i < this.inputSentences.length; i++) {
-    //   this.$store.commit("addAnnotation", {
-    //     text: this.inputSentences[i].text,
-    //     entities: {},
-    //   });
-    //   this.nextSentence();
-    // }
 
     document.addEventListener("mouseup", this.selectTokens);
     document.addEventListener('keydown', this.keypress);
 
     // Emits
-    this.emitter.on('undo', () => {
-      this.undo();
-    });
-
-    this.emitter.on('reset-annotations', () => {
-      this.resetBlocks();
-    });
+    this.emitter.on('undo', this.undo);
+    this.emitter.on('reset-annotations',  this.resetBlocks);
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);
@@ -253,17 +241,6 @@ export default {
         entities: this.tm.exportAsAnnotation(),
       });
       this.$store.lastSavedTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    },
-    getWordCount(text) {
-      console.log(text)
-      if (text == null) return 0;
-      let words = text.split(/\s+/).filter((word) => word.length > 0);
-      return words.length;
-    },
-    getCharCount(text) {
-      console.log(text)
-      if (text == null) return 0;
-      return text.length;
     },
     getWordCount(text) {
       if (text == null) return 0;
