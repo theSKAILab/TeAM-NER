@@ -103,12 +103,24 @@ const mutations = {
         }
     }
 
-    state.originalText = file.annotations.map((item) => item[0]).join(state.separator);
-    state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
-    state.annotations = file.annotations.map((sentence) => {
-      return {
-        text: sentence[0],
-        entities: sentence[1].entities,
+        return { id: i, text: annotationText };
+      });
+      state.originalText = processedTexts.map((item) => item.text).join(state.separator);
+      state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
+
+      for (var i = 0; i < state.inputSentences.length; i++) {
+        payload = {
+          text: state.inputSentences[i].text,
+          entities: {},
+        }
+        state.annotations[state.currentIndex] = payload;
+        state.currentAnnotation = payload
+        state.currentIndex++;
+      }
+      state.currentIndex = 0;
+
+      if (jsonData.classes && Array.isArray(jsonData.classes)) {
+        mutations.loadClasses(state, jsonData.classes);
       }
     })
 
