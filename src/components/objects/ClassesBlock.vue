@@ -94,10 +94,7 @@
       };
     },
     computed: {
-      ...mapState(["classes", "currentClass", "enableKeyboardShortcuts"]),
-    },
-    created() {
-      document.addEventListener('keydown', this.keypress);
+      ...mapState(["classes", "currentClass"]),
     },
     watch: {
       newClassName(now, then) {
@@ -109,30 +106,15 @@
     methods: {
       ...mapMutations(["setCurrentClass"]),
       ...mapActions(["createNewClass", "deleteClass"]),
-      keypress(event) {
-        if (!this.enableKeyboardShortcuts) {
-          return
-        }
-        var key = parseInt(event.key)
-        if (!key) {
-          return
-        }
-        if (key > this.classes.length) {
-          return
-        }
-        
-        this.setCurrentClass(key - 1);
-        return
-      },
       handleRemoveClass(class_id, className) {
-        let sure = confirm(
-          "Are you sure you want to remove the tag `" +
-            className +
-            "`?\nNOTE: This will NOT affect previously tagged entities."
-        );
-        if (sure) {
+        this.$q.dialog({
+          title: 'Tag Removal Confirmation',
+          message: 'Are you sure you want to remove the tag `' + className + '`?',
+          cancel: true,
+          persistent: true
+        }).onOk(() => {
           this.deleteClass(class_id);
-        }
+        })
       },
       saveNewClass() {
         if (!this.newClassName) {
@@ -143,11 +125,6 @@
           self.showNewClassInput = false;
           self.newClassName = "";
         });
-      },
-      onInputKeyup(e) {
-        if (e.key === "Enter") {
-          this.saveNewClass();
-        }
       },
     },
   };

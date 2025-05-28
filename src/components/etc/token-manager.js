@@ -9,10 +9,6 @@ class TokenManager {
     this.rejectedAnnotations = []; // Initialize rejected annotations array
   }
 
-  getTokenByStart(start) {
-      return this.tokens.find(token => token.start === start);
-  }
-
   setTokensAndAnnotation(tokens, currentAnnotation) {
     // Initialize tokens with provided annotation data
     this.tokens = tokens.map((t) => ({
@@ -28,15 +24,30 @@ class TokenManager {
       // reset previous annotation state
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
         var annotation = currentAnnotation.entities[i];
-  
+
         var entityName = annotation.label;
-        var entityClass = this.classes.find(c => c.name == entityName);        
+        var entityClass = this.classes.find(c => c.name == entityName);
         if (!entityClass) {
-          entityClass = {"name": entityName};
+          entityClass = { "name": entityName };
         }
         this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.history, annotation.isSymbolActive);
       }
     }
+  }
+
+  isOverlapping(start, end) {
+    var overlappingBlocks = [];
+
+    for (let i = 0; i < this.tokens.length; i++) {
+      let currentToken = this.tokens[i];
+      if (currentToken.type === "token-block") {
+        if ((start > currentToken.start && start < currentToken.end) ||
+            (end > currentToken.start && end < currentToken.end))
+        // start is inside a token block
+        overlappingBlocks.push(currentToken);
+      }
+    }
+    return overlappingBlocks.length > 0? overlappingBlocks : null;
   }
 
   /**
@@ -47,16 +58,15 @@ class TokenManager {
    * @param {Number} end 'start' value of the token forming the end of the token block
    * @param {Number} _class the id of the class to highlight
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
-
    */
-  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name="name", status ="Candidate", annotationHistory, isSymbolActive = 0, page) {
+  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name = "name", status = "Candidate", annotationHistory, isSymbolActive = 0, page) {
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
-  
+
     let selectionStart = _end < _start ? _end : _start;
     let selectionEnd = _end > _start ? _end : _start;
-    
+
     for (let i = 0; i < this.tokens.length; i++) {
       let currentToken = this.tokens[i];
       if (currentToken.start >= selectionEnd && selectedTokens.length) {
@@ -65,6 +75,7 @@ class TokenManager {
         selectedTokens = []; // Ensure selected tokens are cleared after use
         newTokens.push(currentToken);
       } else if (currentToken.end >= selectionStart && currentToken.start < selectionEnd) {
+        // overlapping selection
         // token is inside the selection
         if (currentToken.type == "token-block") {
           if (page == "review") {
@@ -82,7 +93,7 @@ class TokenManager {
       }
     }
 
-    
+
     if (selectedTokens.length) {
       appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
       selectedTokens = []; // Ensure selected tokens are cleared after use
@@ -112,10 +123,8 @@ class TokenManager {
         };
         tokensArray.push(newBlock);
       }
+    }
   }
-  
-  }
-  
 
   /**
    * Removes a token block and puts back all the tokens in their original position
@@ -137,26 +146,6 @@ class TokenManager {
     this.tokens = newTokens;
   }
 
-  /**
-   * Removes all the tag blocks and leaves only tokens
-   */
-  resetBlocks() {
-    let newTokens = [];
-    for (let i = 0; i < this.tokens.length; i++) {
-      if (this.tokens[i].type === "token") {
-        newTokens.push(this.tokens[i]);
-      } else {
-        newTokens.push(...this.tokens[i].tokens);
-      }
-    }
-    this.tokens = newTokens;
-  }
-
-  updateSymbolState(tokenStart, newSymbolState) {
-    const tokenBlock = this.tokens.find(token => token.type === 'token-block' && token.start === tokenStart);
-    tokenBlock.isSymbolActive = newSymbolState;
-    tokenBlock.userHasToggled = true; // Update based on user interaction
-  }
   /**
    * Exports the tokens and the token blocks as annotations
    */
@@ -207,7 +196,7 @@ class TokenManager {
     }
 
     return null;
-  }  
+  }
 }
 
 export default TokenManager;
