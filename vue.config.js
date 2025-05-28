@@ -8,12 +8,13 @@ module.exports = {
     quasar: {
       importStrategy: "kebab",
       rtlSupport: false,
-    },
-    pwa: {
-      name: "Text Annotation Review and Tagging (TART)",
-      themeColor: '#027be3',
-      msTileColor: '#027be3',
     }
+  },
+
+  pwa: {
+      name: "Text Annotation Review and Tagging",
+      themeColor: '#002a5c',
+      msTileColor: '#002a5c',
   },
 
   configureWebpack: (config) => {
