@@ -9,18 +9,13 @@
 </template>
 
 <script>
-import { mapMutations } from "vuex";
 
 export default {
   name: "StartPage",
-  emits: ["text-file-loaded", "json-file-loaded"],
   data() {
     return {
       textFile: null,
     };
-  },
-  methods: {
-    ...mapMutations(["setInputSentences","clearAllAnnotations"]),
   },
 };
 </script>

@@ -4,35 +4,53 @@
 
         <!-- File -->
         <div class="cursor-pointer non-selectable">
-          <span class="q-menu-open-button">
+          <span class="q-menu-open-button" ref="fileMenu">
             File
           </span>
-          <q-menu>
+          <q-menu transition-show="jump-down" transition-hide="jump-up">
             <q-list dense style="min-width: 100px">
               <q-item clickable v-close-popup @click="$store.state.currentPage != 'start'? pendingOpen = $refs.file: $refs.file.click()">
-                <q-item-section>Open...</q-item-section>
-                <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
+                <q-item-section>
+                  <span>Open</span> 
+                  <span class="keyboard-tip">Ctrl + O</span>
+                </q-item-section>
               </q-item>
-              <export-annotations />
+                <q-item clickable v-close-popup @click="promptForNameAndExport()" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                  <q-item-section>
+                    <span>Save</span> 
+                    <span class="keyboard-tip">Ctrl + S</span>
+                  </q-item-section>
+                </q-item>
               <q-item clickable v-close-popup @click="pendingClose = true;" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section >Close</q-item-section>
+                <q-item-section >
+                  <span>Close</span> 
+                  <span class="keyboard-tip">Ctrl + Q</span>
+                </q-item-section>
               </q-item>
             </q-list>
           </q-menu>
         </div>
-
+        
+        <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
+        
         <!-- Edit -->
         <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button">
+          <span class="q-menu-open-button" ref="editMenu">
             Edit
           </span>
-          <q-menu>
+          <q-menu transition-show="jump-down" transition-hide="jump-up">
             <q-list dense style="min-width: 100px">
               <q-item clickable v-close-popup @click="this.emitter.emit('undo')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>Undo</q-item-section>
+                <q-item-section>
+                    <span>Undo</span> 
+                    <span class="keyboard-tip">Ctrl + Z</span>
+                </q-item-section>
               </q-item>
-              <q-item clickable v-close-popup @click="this.emitter.emit('reset-annotations')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>Undo All</q-item-section>
+              <q-item clickable v-close-popup @click="this.emitter.emit('undoAll')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                <q-item-section>
+                  <span>Undo All</span> 
+                  <span class="keyboard-tip">Alt + Z</span>
+                </q-item-section>
               </q-item>
             </q-list>
           </q-menu>
@@ -40,22 +58,25 @@
 
         <!-- Annotator -->
         <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button">
+          <span class="q-menu-open-button" ref="annotatorMenu">
             Annotator
           </span>
-          <q-menu>
+          <q-menu transition-show="jump-down" transition-hide="jump-up">
             <q-list dense style="min-width: 100px">
               <q-item clickable v-close-popup @click="() => {$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>Change Mode</q-item-section>
+                <q-item-section>
+                  <span>Change Mode</span> 
+                  <span class="keyboard-tip">Ctrl + M</span>
+                </q-item-section>
               </q-item>
             </q-list>
           </q-menu>
         </div>
 
         <!-- Help -->
-        <div class="q-ml-md cursor-pointer non-selectable">
+        <div class="q-ml-md cursor-pointer non-selectable" ref="helpMenu">
           <span class="q-menu-open-button">Help</span>
-          <q-menu>
+          <q-menu transition-show="jump-down" transition-hide="jump-up">
             <q-list dense style="min-width: 100px">
               <q-item clickable v-close-popup href="https://github.com/theSKAILab/TeAM-NER/issues" target="_blank">
                 Report Issue
@@ -89,44 +110,20 @@
 <script>
 import ExportAnnotations from "../etc/ExportAnnotations.vue";
 import { mapState, mapMutations } from "vuex";
-import { useQuasar } from "quasar";
 import AboutDialog from "../dialogs/AboutDialog.vue";
 import ExitDialog from "../dialogs/ExitDialog.vue";
 import OpenDialog from "../dialogs/OpenDialog.vue";
-import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 export default {
-  components: { ExportAnnotations, AboutDialog, ExitDialog, OpenDialog },
+  components: { AboutDialog, ExitDialog, OpenDialog },
   name: "MenuBar",
   data: function () {
     return {
-      promptForProject: false,
-      newProjectName: "",
       showAbout: false,
       pendingClose: null,
       pendingOpen: null,
       installablePWA: false,
       deferredPrompt: null, 
-    };
-  },
-  setup() {
-    const $q = useQuasar();
-    return {
-      notify(icon, message, level) {
-        $q.notify({
-          icon,
-          message,
-          color: level,
-          position: "top",
-          timeout: 2000,
-          actions: [
-            {
-              label: "Dismiss",
-              color: "white",
-            },
-          ],
-        });
-      },
     };
   },
   created() {
@@ -144,11 +141,9 @@ export default {
   computed: {
     ...mapState(["annotations", "classes","fileName","lastSavedTimestamp"]),
   },
+  mixins: [ExportAnnotations],
   methods: {
-    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage","loadFile"]),
-    getCurrentWebview() {
-      return getCurrentWebview();
-    },
+    ...mapMutations(["setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage","loadFile"]),
     onFileSelected(file) {
       // onFileSelected() is called if the user clicks and manually
       //    selects a file. If they drag and drop, that is handled in
@@ -173,7 +168,11 @@ export default {
             this.$emit("json-file-loaded");
           }
           else {
-            alert('Please upload either a .txt or a .json file.');
+            this.$q.dialog({
+              title: 'Incompatible File Type',
+              message: 'Please upload either a .txt or a .json file.'
+            })
+            this.setCurrentPage('start')
           }
         });
       } catch (e) {
@@ -191,10 +190,25 @@ export default {
       this.$q.dark.toggle();
     },
     menuKeyBind(e) {
+      var isValid = this.$store.state.currentPage != 'start'
       if (e.ctrlKey) e.preventDefault();
-      // if (e.key == "o" && e.ctrlKey) {this.open()};
-      // if (e.key == "s" && e.ctrlKey) {return};
-      // if (e.key == "b" && e.ctrlKey) {this.close()};
+      // Menu Open Binds
+      if (e.key == "f" && e.ctrlKey) {this.$refs.fileMenu.click()};
+      if (e.key == "e" && e.ctrlKey) {this.$refs.editMenu.click()};
+      if (e.key == "a" && e.ctrlKey) {this.$refs.annotatorMenu.click()};
+      if (e.key == "h" && e.ctrlKey) {this.$refs.helpMenu.click()};
+      
+      // File Menu Binds
+      if (e.key == "o" && e.ctrlKey) {this.$refs.file.click()};
+      if (e.key == "s" && e.ctrlKey && isValid) {this.promptForNameAndExport()};
+      if (e.key == "q" && e.ctrlKey && isValid) {this.pendingClose = true;};
+      
+      // Edit Menu Binds
+      if (e.key == "z" && e.ctrlKey && isValid) {this.emitter.emit('undo')};
+      if (e.key == "z" && e.altKey && isValid) {console.log("Fire");this.emitter.emit('undoAll')};
+
+      // Annotator Menu Binds
+      if (e.key == "m" && e.ctrlKey && isValid) {this.$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}
     }
   },
 };

@@ -136,7 +136,7 @@ const mutations = {
   },
   removeClass(state, payload) {
     state.classes = state.classes.filter((c) => c.id != payload);
-    if (state.currentClass.id === payload) {
+    if (state.currentClass && state.currentClass.id === payload) {
       state.currentClass = state.classes[0];
     }
   },
@@ -165,16 +165,12 @@ const mutations = {
     if (state.currentIndex < state.inputSentences.length - 1) {
       state.currentIndex += 1;
       state.currentAnnotation = state.annotations[state.currentIndex] || {};
-    } else {
-      //alert("You have completed all the sentences");
     }
   },
   previousSentence(state) {
     if (state.currentIndex > 0) {
       state.currentIndex -= 1;
       state.currentAnnotation = state.annotations[state.currentIndex];
-    } else {
-      alert("You are at the beginning of all sentences");
     }
   },
   resetIndex(state) {
@@ -205,6 +201,15 @@ const mutations = {
       type: "update",
       oldBlock: oldBlock
     };
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
+  },
+  addUndoOverlapping(state, oldBlocks, newBlockStart) {
+    var newUndo = {
+      type: "overlapping",
+      overlappingBlocks: oldBlocks,
+      newBlockStart: newBlockStart,
+    }
     state.undoStack.push(newUndo);
     state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
   }
