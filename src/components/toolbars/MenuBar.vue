@@ -87,12 +87,12 @@
 </template>
 
 <script>
-import ExportAnnotations from "./ExportAnnotations.vue";
+import ExportAnnotations from "../etc/ExportAnnotations.vue";
 import { mapState, mapMutations } from "vuex";
 import { useQuasar } from "quasar";
-import AboutDialog from "../etc/AboutDialog.vue";
-import ExitDialog from "../etc/ExitDialog.vue";
-import OpenDialog from "../etc/OpenDialog.vue";
+import AboutDialog from "../dialogs/AboutDialog.vue";
+import ExitDialog from "../dialogs/ExitDialog.vue";
+import OpenDialog from "../dialogs/OpenDialog.vue";
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 
 export default {
