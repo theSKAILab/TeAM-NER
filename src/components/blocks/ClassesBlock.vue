@@ -48,13 +48,13 @@
                 round
                 dense
                 flat
-                color="green-4"
+                color="primary"
                 icon="fa fa-plus"
                 @click="saveNewClass"
               />
               <q-btn
                 round
-                color="red-4"
+                color="negative"
                 dense
                 flat
                 icon="fa fa-times"
