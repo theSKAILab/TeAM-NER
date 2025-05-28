@@ -15,6 +15,10 @@ module.exports = {
       name: "Text Annotation Review and Tagging",
       themeColor: '#002a5c',
       msTileColor: '#002a5c',
+      workboxOptions: {
+        skipWaiting: true,
+        clientsClaim: true,
+      }
   },
 
   configureWebpack: (config) => {
