@@ -19,6 +19,7 @@
 </template>
 
 <script>
+import { mapMutations } from "vuex/dist/vuex.cjs.js";
 import Token from "./Token";
 import { mapState } from "vuex";
 
@@ -59,33 +60,21 @@ export default {
     },
   },
   methods: {
+    ...mapMutations(["addUndoUpdate", "addUndoRemove"]),
     toggleSymbol() {
-      //this.recordAction('symbol-state', this.isSymbolActive);
-      let oldState = this.isSymbolActive;
+      this.addUndoUpdate({ ...this.token})
       let nextState = (this.isSymbolActive + 1) % 3;
       this.userHasToggled = true;
       this.$emit('update-symbol-state', {
         tokenStart: this.token.start,
-        newSymbolState: nextState,
-        oldSymbolState: oldState
+        newSymbolState: nextState
       });
     },
     toggleReviewed() {
       this.userHasToggled = !this.userHasToggled;
       this.$emit('user-toggle', this.token.start);
     },
-    recordAction(actionType, previousState) {
-      const action = {
-        type: actionType,
-        tokenStart: this.token.start,
-        previousState: previousState,
-        newState: this[actionType === 'symbol-state' ? 'isSymbolActive' : 'userHasToggled'],
-        timestamp: Date.now()
-      };
-      this.$emit('record-undo', action);
-    },
     recordActionAndEmit(action, payload) {
-      this.recordAction(action, this.token);
       this.$emit(action, payload);
     },
     changeClass() {

@@ -18,67 +18,43 @@ const mutations = {
     state.currentClass = state.classes[0];
     LocalStorage.set("tags", state.classes);
   },
-  setInputSentences(state, payload) {
-      let jsonData;
-      if (typeof payload === "string") {
-        // Check if the payload is a JSON string
-        try {
-          jsonData = JSON.parse(payload);
-          // If successful, continue with the JSON data processing
-        } catch (jsonError) {
-          payload = payload.replace(/(\r\n|\n|\r){2,}/gm, "\n"); // Turn multiple newlines into a single newline
-          // If JSON parsing fails, assume it's a text file and proceed to read its content
-          jsonData = {
-            annotations: [[payload, { entities: [] }]],
-            classes: [], // You may need to provide some default values here based on your needs
-          };
-        }
-      } else if (payload instanceof File) {
-        // If the payload is a File (assumed to be a text file), read its content
-        const fileReader = new FileReader();
-        fileReader.onload = function (event) {
-          try {
-            const fileContent = event.target.result;
-            jsonData = {
-              annotations: [[fileContent, { entities: [] }]],
-              classes: [], // You may need to provide some default values here based on your needs
-            };
+  loadFile(state, payload) {
+    // Clear Out Data
+    state.annotations = [];
+    state.currentAnnotation = {};
+    state.classes = [];
+    state.currentClass = null;
+    this.undoStack = [];
 
-            // Proceed with the JSON data processing
-            processJsonData(jsonData);
-          } catch (error) {
-            console.error(`Error processing text file: ${error.message}`);
+    var file = payload;
+    if (this.fileName.split(".")[1] == "json") {
+      file = JSON.parse(file);
+    } else {
+      // This forces the text file into the annotation file format, thus allowing it to be loaded the same without special edge cases
+      file = file.replace(/(\r\n|\n|\r){2,}/gm, "\n");
+      file = file.split(state.separator);
+      file = file.map((item) => {
+        return [
+          item,
+          {
+            entities: []
           }
-        };
-
-        fileReader.readAsText(payload);
-        return;
-      } else {
-        throw new Error("Invalid payload type");
-      }
-
-      // Continue with the JSON data processing
-      processJsonData(jsonData);
-    function determineSymbolState(status) {
-      switch (status) {
-        case "Accepted": return 1;
-        case "Rejected": return 2;
-        case "Candidate": return 0;
-        default: return 0; // Default to candidate if unrecognized status
+        ]
+      })
+      file = {
+        annotations: file,
+        classes: {}
       }
     }
 
-    function processJsonData(jsonData) {
-      /*
-      Function to process data in input entities section and map to token metadata
-      Currenlty set to send the last annotation in the list of annotation history
-      as the information which gets loaded into review page on enter
-      */
-      const processedTexts = jsonData.annotations.map(([annotationText, annotationEntities], i) => {
-        // Store the history of annotations to export to review page
-        let annotationHistory = [];
-        annotationEntities.entities.forEach((entity) => {
-          if (entity.length >= 3) {
+    // Process Entities in Rich Entity Format (REF) used in this software
+    // Additionally, stores the original state of the sentence annotations
+    // This is useful for "undo all", but may eventually be replace with recursive execution of undo stack
+    for(var i = 0; i < file.annotations.length; i++) {
+      for (var j = 0; j < file.annotations[i][1].entities.length; j++) {
+        var sentenceOriginalState = []
+        var entity = file.annotations[i][1].entities[j];
+        if (entity.length >= 3) {
             
             const thisAnnotationHistory = entity[2]
             const latestEntry = thisAnnotationHistory[thisAnnotationHistory.length - 1];
@@ -90,29 +66,46 @@ const mutations = {
               status: latestEntry[0],
               name: latestEntry[2],
               label: latestEntry[3],
-              isSymbolActive: determineSymbolState(latestEntry[0]),
+              isSymbolActive: mutations.determineSymbolState(latestEntry[0]),
               ogNLP: thisAnnotationHistory[0][2] === "nlp",
             }
-            if (historyEntry.isSymbolActive != 2) {
-              annotationHistory.push(historyEntry);
-            } else {
+            if (historyEntry.isSymbolActive == 2) {
+              // TODO: LIKELY CAUSE OF REJECTED ANNOTATIONS BEING AN ISSUE
               // If the status is "Rejected", add it to the rejected annotations
               state.rejectedAnnotations.push(historyEntry);
+            } else {
+              sentenceOriginalState.push(historyEntry);
             }
 
+            // Replace the entity with the history entry
+            file.annotations[i][1].entities[j] = historyEntry;
           }
-        });
-        if (annotationEntities.entities.length) state.annotationHistory[i] = annotationHistory;
-
-        return { id: i, text: annotationText };
-      });
-      state.originalText = processedTexts.map((item) => item.text).join(state.separator);
-      state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
-
-      if (jsonData.classes && Array.isArray(jsonData.classes)) {
-        mutations.loadClasses(state, jsonData.classes);
-      }
+      
+        if (file.annotations[i][1].entities.length) state.annotationHistory[i] = sentenceOriginalState;
+        }
     }
+
+    state.originalText = file.annotations.map((item) => item[0]).join(state.separator);
+    state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
+    state.annotations = file.annotations.map((sentence) => {
+      return {
+        text: sentence[0],
+        entities: sentence[1].entities,
+      }
+    })
+
+    if (file.classes && Array.isArray(file.classes)) {
+       mutations.loadClasses(state, file.classes);
+    }
+  },
+  // TODO: REPLACE HELPER FUNCTIONS SPREAD THRU CODE WITH THIS
+  determineSymbolState(status) {
+      switch (status) {
+        case "Accepted": return 1;
+        case "Rejected": return 2;
+        case "Candidate": return 0;
+        default: return 0; // Default to candidate if unrecognized status
+      }
   },
   addClass(state, payload) {
     // Check if the class already exists
@@ -187,31 +180,34 @@ const mutations = {
   resetIndex(state) {
     state.currentIndex = 0;
   },
-  loadAnnotations(state, payload) {
-    let isValid = typeof payload === "object" && "annotations" in payload && "classes" in payload;
 
-    if (!isValid) {
-      throw new Error("loadAnnotations: payload has invalid schema");
+  // Global Undo Stack
+  addUndoCreate(state, block) {
+    var newUndo = {
+      type: "remove",
+      start: block.start,
     }
-
-    let annotations = payload.annotations;
-    if (!Array.isArray(annotations)) {
-      throw new Error("loadAnnotations: payload must be an array");
-    }
-
-    let newAnnotations = [];
-
-    for (var i = 0; i < annotations.length; i++) {
-      if (annotations[i] == null) continue;
-      let annotation = {
-        text: annotations[i][0],
-        entities: annotations[i][1].entities,
-      };
-      newAnnotations[i] = annotation;
-    }
-    state.annotations = newAnnotations;
-    state.currentAnnotation = state.annotations[state.currentIndex];
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
   },
+  addUndoDelete(state, removedBlock) {
+    var newUndo = {
+      type: "create",
+      oldBlock: removedBlock,
+    };
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
+  },
+  addUndoUpdate(state, oldBlock) {
+    // on action side, deletes block and adds back old block in place
+    // differs from delete in that it expects no blocks to be there
+    var newUndo = {
+      type: "update",
+      oldBlock: oldBlock
+    };
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
+  }
 };
 
 const getters = {};

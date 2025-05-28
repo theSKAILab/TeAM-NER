@@ -1,27 +1,8 @@
 <template>
   <q-header bordered>
       <div class="q-pa-sm q-pl-md row items-center">
-        <!-- <div>
-          <q-avatar size="xs">
-            <img src="@/assets/icon_32.png" />
-          </q-avatar>
-          <span class="q-ml-sm">
-            <strong>
-              TART
-            </strong>
-          </span>
-        </div>
-        <div>
-          <span class="q-ml-sm">
-            <strong v-if="$store.state.currentPage === 'annotate'" style="color: rgb(207, 255, 207)">
-              | Annotation Mode |
-            </strong>
-            <strong v-else-if="$store.state.currentPage === 'review'" style="color: rgb(255, 255, 128)">
-              | Review Mode |
-            </strong>
-          </span>
-        </div> -->
 
+        <!-- File -->
         <div class="cursor-pointer non-selectable">
           <span class="q-menu-open-button">
             File
@@ -40,6 +21,7 @@
           </q-menu>
         </div>
 
+        <!-- Edit -->
         <div class="q-ml-md cursor-pointer non-selectable">
           <span class="q-menu-open-button">
             Edit
@@ -56,6 +38,7 @@
           </q-menu>
         </div>
 
+        <!-- Annotator -->
         <div class="q-ml-md cursor-pointer non-selectable">
           <span class="q-menu-open-button">
             Annotator
@@ -69,6 +52,7 @@
           </q-menu>
         </div>
 
+        <!-- Help -->
         <div class="q-ml-md cursor-pointer non-selectable">
           <span class="q-menu-open-button">Help</span>
           <q-menu>
@@ -87,6 +71,13 @@
 
         <q-space />
 
+        <div class="q-ml-md q-mr-lg cursor-pointer non-selectable" v-if="installablePWA">
+          <span class="q-menu-open-button" @click="deferredPrompt.prompt()">
+                Install Application
+          </span>
+        </div>
+
+        <!-- Theme Mode Switch -->
         <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
       </div>
   </q-header>
@@ -98,7 +89,6 @@
 <script>
 import ExportAnnotations from "./ExportAnnotations.vue";
 import { mapState, mapMutations } from "vuex";
-import { exportFile } from "./utils";
 import { useQuasar } from "quasar";
 import AboutDialog from "../etc/AboutDialog.vue";
 import ExitDialog from "../etc/ExitDialog.vue";
@@ -108,6 +98,17 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 export default {
   components: { ExportAnnotations, AboutDialog, ExitDialog, OpenDialog },
   name: "MenuBar",
+  data: function () {
+    return {
+      promptForProject: false,
+      newProjectName: "",
+      showAbout: false,
+      pendingClose: null,
+      pendingOpen: null,
+      installablePWA: false,
+      deferredPrompt: null, 
+    };
+  },
   setup() {
     const $q = useQuasar();
     return {
@@ -128,43 +129,25 @@ export default {
       },
     };
   },
-  data: function () {
-    return {
-      promptForProject: false,
-      newProjectName: "",
-      showAbout: false,
-      pendingClose: null,
-      pendingOpen: null,
-    };
+  created() {
+    document.addEventListener('keydown', this.menuKeyBind);
+    window.addEventListener("beforeinstallprompt", (e) => {
+      this.installablePWA = true;
+      // Stash the event so it can be triggered later.
+      this.deferredPrompt = e;
+    });
+    window.addEventListener("appinstalled", () => {
+      this.installablePWA = false;
+      this.deferredPrompt = null;
+    })
   },
   computed: {
     ...mapState(["annotations", "classes","fileName","lastSavedTimestamp"]),
   },
   methods: {
-    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage"]),
-    // Funtion that exports the tags to a JSON file
+    ...mapMutations(["loadClasses", "loadAnnotations", "setInputSentences", "clearAllAnnotations", "resetIndex", "setCurrentPage","loadFile"]),
     getCurrentWebview() {
       return getCurrentWebview();
-    },
-    exportTags: async function () {
-      await exportFile(JSON.stringify(this.classes), "tags.json");
-    },
-    importTags: function (e) {
-      let file = e.target.files[0];
-      let filereader = new FileReader();
-      filereader.onload = (ev) => {
-        try {
-          this.loadClasses(JSON.parse(ev.target.result));
-          this.notify(
-            "fa fa-check",
-            `${this.classes.length} Tags imported successfully`,
-            "positive"
-          );
-        } catch (_) {
-          this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
-        }
-      };
-      filereader.readAsText(file);
     },
     onFileSelected(file) {
       // onFileSelected() is called if the user clicks and manually
@@ -181,7 +164,8 @@ export default {
         reader.readAsText(file);
         reader.addEventListener("load", (event) => {
           this.clearAllAnnotations();
-          this.setInputSentences(event.target.result);
+          this.loadFile(event.target.result);
+
           if (fileType === "txt") {
             this.$emit("text-file-loaded");
           }
@@ -193,39 +177,25 @@ export default {
           }
         });
       } catch (e) {
-        this.fileSelectionError();
+        this.$q.notify({
+          icon: "fas fa-exclamation-circle",
+          message: "Invalid file",
+          color: "red-6",
+          position: "top",
+          timeout: 2000,
+          actions: [{label: "Dismiss", color: "white"}],
+        });
       }
-    },
-    fileSelectionError() {
-      this.$q.notify({
-        icon: "fas fa-exclamation-circle",
-        message: "Invalid file",
-        color: "red-6",
-        position: "top",
-        timeout: 2000,
-        actions: [{label: "Dismiss", color: "white"}],
-      });
-    },
-    importAnnotations: function (e) {
-      let file = e.target.files[0];
-      let filereader = new FileReader();
-      filereader.onload = (ev) => {
-        try {
-          this.loadAnnotations(JSON.parse(ev.target.result));
-          this.notify(
-            "fa fa-check",
-            `Annotations imported successfully`,
-            "positive"
-          );
-        } catch (_) {
-          this.notify("fas fa-exclamation-circle", "Invalid file", "red-6");
-        }
-      };
-      filereader.readAsText(file);
     },
     toggleDarkMode: function () {
       this.$q.dark.toggle();
     },
+    menuKeyBind(e) {
+      if (e.ctrlKey) e.preventDefault();
+      // if (e.key == "o" && e.ctrlKey) {this.open()};
+      // if (e.key == "s" && e.ctrlKey) {return};
+      // if (e.key == "b" && e.ctrlKey) {this.close()};
+    }
   },
 };
 </script>

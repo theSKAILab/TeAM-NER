@@ -15,12 +15,20 @@ export default {
   },
   methods: {
     promptForNameAndExport() {
-      const annotator = prompt('Please enter your name for the annotations export:');
-      if (annotator) {
-        this.generateJSONExport(annotator);
-      }
+      this.$q.dialog({
+          title: 'Save File',
+          message: 'Please enter a name for the exported annotations file',
+          prompt: {
+            model: '',
+            type: 'text' // optional
+          },
+          cancel: true,
+          persistent: true
+        }).onOk(data => {
+          // console.log('>>>> OK, received', data)
+          this.generateJSONExport(data);
+        })
     },
-
     async generateJSONExport(annotator) {
       const output = {
         classes: this.classes.map((c, index) => ({
@@ -57,7 +65,8 @@ export default {
               return [
                 entity.start, // start position
                 entity.end, // end position
-                history.map(h => [h[0], h[1], h[2], h[3]]) // history array
+                history.map(h => [h[0], h[1], h[2], h[3]]), // history array
+                null, // id field required for knowledge graph, initially null
               ];
             }): []
           }
@@ -71,16 +80,16 @@ export default {
         console.error("Export failed:", error);
       }
     },
-	formatDate(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
+    formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
 
-      return `${year}-${month}-${day}~${hours}:${minutes}:${seconds}`;
-    },
-  },
+        return `${year}-${month}-${day}~${hours}:${minutes}:${seconds}`;
+      },
+    }
 }
 </script>
