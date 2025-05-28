@@ -291,6 +291,17 @@ export default {
       if (text == null) return 0;
       return text.length;
     },
+    getWordCount(text) {
+      console.log(text)
+      if (text == null) return 0;
+      let words = text.split(/\s+/).filter((word) => word.length > 0);
+      return words.length;
+    },
+    getCharCount(text) {
+      console.log(text)
+      if (text == null) return 0;
+      return text.length;
+    },
     // Undo Functions
     /**
      * Undo the last action and remove from the undo stack
