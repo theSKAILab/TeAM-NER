@@ -71,6 +71,12 @@
 
         <q-space />
 
+        <div class="q-ml-md q-mr-lg cursor-pointer non-selectable" v-if="installablePWA">
+          <span class="q-menu-open-button" @click="deferredPrompt.prompt()">
+                Install Application
+          </span>
+        </div>
+
         <!-- Theme Mode Switch -->
         <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
       </div>
@@ -92,6 +98,17 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 export default {
   components: { ExportAnnotations, AboutDialog, ExitDialog, OpenDialog },
   name: "MenuBar",
+  data: function () {
+    return {
+      promptForProject: false,
+      newProjectName: "",
+      showAbout: false,
+      pendingClose: null,
+      pendingOpen: null,
+      installablePWA: false,
+      deferredPrompt: null, 
+    };
+  },
   setup() {
     const $q = useQuasar();
     return {
@@ -112,17 +129,17 @@ export default {
       },
     };
   },
-  data: function () {
-    return {
-      promptForProject: false,
-      newProjectName: "",
-      showAbout: false,
-      pendingClose: null,
-      pendingOpen: null,
-    };
-  },
   created() {
     document.addEventListener('keydown', this.menuKeyBind);
+    window.addEventListener("beforeinstallprompt", (e) => {
+      this.installablePWA = true;
+      // Stash the event so it can be triggered later.
+      this.deferredPrompt = e;
+    });
+    window.addEventListener("appinstalled", () => {
+      this.installablePWA = false;
+      this.deferredPrompt = null;
+    })
   },
   computed: {
     ...mapState(["annotations", "classes","fileName","lastSavedTimestamp"]),
