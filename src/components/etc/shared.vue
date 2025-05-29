@@ -10,29 +10,30 @@ export default {
     };
   },
   methods: {
-    ...mapMutations(["nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate","addUndoOverlapping"]),
+    ...mapMutations(["currentPage", "nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate","addUndoOverlapping"]),
     undo() {
         console.log({...this.undoStack})
         if (this.undoStack.length > 0) {
             const lastAction = this.undoStack.pop();
             switch (lastAction.type) {
             case 'remove':
-                this.tm.removeBlock(lastAction.start);
-                this.save();
-                break;
+              this.tm.removeBlock(lastAction.start);
+              this.save();
+              break;
             case 'create':
-                this.tm.addNewBlock(lastAction.oldBlock.start, lastAction.oldBlock.end, this.classes.find(c => c.name == lastAction.oldBlock.label), lastAction.oldBlock.humanOpinion, lastAction.oldBlock.initiallyNLP, lastAction.oldBlock.isLoaded, lastAction.oldBlock.name, lastAction.oldBlock.status, lastAction.oldBlock.annotationHistory, lastAction.oldBlock.isSymbolActive);
-                this.save();
-                break;
+              this.tm.addBlockFromBlock(lastAction.oldBlock);
+              this.save();
+              break;
             case 'update':
-                this.tm.removeBlock(lastAction.oldBlock.start);
-                this.tm.addNewBlock(lastAction.oldBlock.start, lastAction.oldBlock.end, this.classes.find(c => c.name == lastAction.oldBlock.label), lastAction.oldBlock.humanOpinion, lastAction.oldBlock.initiallyNLP, lastAction.oldBlock.isLoaded, lastAction.oldBlock.name, lastAction.oldBlock.status, lastAction.oldBlock.annotationHistory, lastAction.oldBlock.isSymbolActive);
-                break;
+              this.tm.removeBlock(lastAction.oldBlock.start);
+              this.tm.addBlockFromBlock(lastAction.oldBlock);
+              break;
             case 'overlapping':
-                this.tm.removeBlock(lastAction.newBlockStart);
-                for(var i = 0; i < lastAction.overlappingBlocks.length; i++) {
-                    this.tm.addNewBlock(lastAction.overlappingBlocks[i].start, lastAction.overlappingBlocks[i].end, this.classes.find(c => c.name == lastAction.overlappingBlocks[i].label), lastAction.overlappingBlocks[i].humanOpinion, lastAction.overlappingBlocks[i].initiallyNLP, lastAction.overlappingBlocks[i].isLoaded, lastAction.overlappingBlocks[i].name, lastAction.overlappingBlocks[i].status, lastAction.overlappingBlocks[i].annotationHistory, lastAction.overlappingBlocks[i].isSymbolActive);
-                }
+              this.tm.removeBlock(lastAction.newBlockStart);
+              for(var i = 0; i < lastAction.overlappingBlocks.length; i++) {
+                this.tm.addBlockFromBlock(lastAction.overlappingBlocks[i]);
+              }
+              break;
             }
         }
     },
@@ -47,18 +48,8 @@ export default {
       this.currentSentence = this.inputSentences[this.currentIndex];
       this.currentAnnotation = this.annotations[this.currentIndex];
 
-      let tokens, spans;
-
-      if (this.$store.state.annotationPrecision == "char") {
-        tokens = this.currentSentence.text.split('');
-        spans = [];
-        for (let i = 0; i < this.currentSentence.text.length; i++) {
-          spans.push([i, i + 1]);
-        }
-      } else {
-        tokens = this.tokenizer.tokenize(this.currentSentence.text);
-        spans = this.tokenizer.span_tokenize(this.currentSentence.text);
-      }
+      let tokens = this.tokenizer.tokenize(this.currentSentence.text);
+      let spans = this.tokenizer.span_tokenize(this.currentSentence.text);
 
       let combined = tokens.map((t, i) => [spans[i][0], spans[i][1], t]);
       this.tm = new TokenManager(this.classes);
@@ -98,11 +89,10 @@ export default {
       // Determine if the selection will overlap with an existing block and add to undo stack accordingly
       var existingBlocks = this.tm.isOverlapping(start, end);
       if (existingBlocks) {
-        console.log("Existing Block:", existingBlocks);
         this.addUndoOverlapping(existingBlocks, start);
-        this.tm.addNewBlock(start, end, this.currentClass, true, false);
+        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", 1);
       } else {
-        this.tm.addNewBlock(start, end, this.currentClass, true, false);
+        this.tm.addNewBlock(start, end, this.currentClass, this.currentPage == "annotate"? "Candidate": "Suggested", this.currentPage == "annotate"? 0: 3);
         this.addUndoCreate(this.tm.getBlockByStart(start));
       }
 
@@ -135,7 +125,7 @@ export default {
 
       // Create a new block with the same start and end, but with the current tag/label/class
       if (start !== undefined && end !== undefined) {
-        this.tm.addNewBlock(start, end, this.currentClass);
+        this.tm.addNewBlock(start, end, this.currentClass, existingBlock.status, existingBlock.isSymbolActive);
       }
       this.save();
     },

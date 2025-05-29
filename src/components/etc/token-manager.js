@@ -30,7 +30,7 @@ class TokenManager {
         if (!entityClass) {
           entityClass = { "name": entityName };
         }
-        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.history, annotation.isSymbolActive);
+        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.status, annotation.isSymbolActive);
       }
     }
   }
@@ -50,6 +50,17 @@ class TokenManager {
     return overlappingBlocks.length > 0? overlappingBlocks : null;
   }
 
+  addBlockFromBlock(block) {
+    this.addNewBlock(
+      block.start,
+      block.end,
+      this.classes.find(c => c.id == block.classId) || { name: block.label, color: block.backgroundColor },
+      block.status,
+      block.annotationHistory,
+      block.isSymbolActive,
+    )
+  }
+
   /**
    * Creates a new token block with the tokens whose starts match the input
    * parameters
@@ -59,7 +70,7 @@ class TokenManager {
    * @param {Number} _class the id of the class to highlight
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
    */
-  addNewBlock(_start, _end, _class, humanOpinion, initiallyNLP = false, isLoaded, name = "name", status = "Candidate", annotationHistory, isSymbolActive = 0, page) {
+  addNewBlock(_start, _end, _class, status = "Candidate", isSymbolActive = 0, page = "annotate") {
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
@@ -71,7 +82,7 @@ class TokenManager {
       let currentToken = this.tokens[i];
       if (currentToken.start >= selectionEnd && selectedTokens.length) {
         // token is first after the selection
-        appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
+        appendNewBlock(selectedTokens, _class, newTokens); // Append selected tokens with updated attributes
         selectedTokens = []; // Ensure selected tokens are cleared after use
         newTokens.push(currentToken);
       } else if (currentToken.end >= selectionStart && currentToken.start < selectionEnd) {
@@ -95,30 +106,27 @@ class TokenManager {
 
 
     if (selectedTokens.length) {
-      appendNewBlock(selectedTokens, _class, newTokens, true); // Append selected tokens with updated attributes
+      appendNewBlock(selectedTokens, _class, newTokens); // Append selected tokens with updated attributes
       selectedTokens = []; // Ensure selected tokens are cleared after use
       //newTokens.push(currentToken);
     }
     // Update the tokens array with new tokens
     this.tokens = newTokens;
-    function appendNewBlock(tokens, _class, tokensArray, updateAttributes = false) {
+    function appendNewBlock(tokens, _class, tokensArray) {
       if (tokens.length) {
         let newBlock = {
           type: "token-block",
           start: tokens[0].start,
           end: tokens[tokens.length - 1].end,
-          name: name,
           tokens: tokens,
           humanOpinion: true,
           label: _class.name,
           classId: _class.id || 0,
           backgroundColor: _class.color || null,
           // Set these attributes for all token-blocks, updating existing blocks as needed
-          initiallyNLP: updateAttributes ? initiallyNLP : false,
           isSymbolActive: isSymbolActive,
-          isLoaded: isLoaded,
           status: status,
-          annotationHistory: annotationHistory,
+
           userHasToggled: false,
         };
         tokensArray.push(newBlock);

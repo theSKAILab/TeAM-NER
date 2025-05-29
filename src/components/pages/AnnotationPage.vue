@@ -42,7 +42,6 @@ export default {
       "currentClass",
       "currentIndex",
       "inputSentences",
-      "enableKeyboardShortcuts",
       "annotationPrecision",
       "lastSavedTimestamp",
       "undoStack"
