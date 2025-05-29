@@ -79,6 +79,11 @@ export default {
   },
   beforeUnmount() {
     document.removeEventListener("mouseup", this.selectTokens);
+
+    // Remove Emits
+    this.emitter.off('undo', this.undo);
+    this.emitter.off('undoAll',  this.undoAll);
+    this.emitter.off('tokenizeCurrentSentence', this.tokenizeCurrentSentence);
   },
   mixins: [SharedEditorFunctions],
   methods: {
