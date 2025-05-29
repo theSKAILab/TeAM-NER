@@ -107,6 +107,7 @@ const mutations = {
         default: return 0; // Default to candidate if unrecognized status
       }
   },
+  //TODO: REPLACE COMMIT CALLS WITH THIS MUTATION
   addClass(state, payload) {
     // Check if the class already exists
     const existingClass = state.classes.find((c) => c.name === payload);
@@ -151,16 +152,6 @@ const mutations = {
     state.annotations = [];
     state.currentAnnotation = {};
   },
-  setSeparator(state, payload) {
-    state.separator = payload;
-    state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
-  },
-  setAnnotationPrecision(state, payload) {
-    state.annotationPrecision = payload;
-  },
-  setKeyboardShortcuts(state, payload) {
-    state.enableKeyboardShortcuts = payload;
-  },
   nextSentence(state) {
     if (state.currentIndex < state.inputSentences.length - 1) {
       state.currentIndex += 1;
@@ -176,7 +167,6 @@ const mutations = {
   resetIndex(state) {
     state.currentIndex = 0;
   },
-
   // Global Undo Stack
   addUndoCreate(state, block) {
     var newUndo = {
@@ -215,8 +205,6 @@ const mutations = {
   }
 };
 
-const getters = {};
-
 const actions = {
   createNewClass({ commit, state }, className) {
     return new Promise((resolve, reject) => {
@@ -235,35 +223,28 @@ const actions = {
   },
 };
 
-window.addEventListener("beforeunload", async (event) => {
-  event.returnValue = "Please make sure you export annotations before closing the file.";
-});
-
 export default {
   state() {
     let tags = LocalStorage.getItem("tags");
     return {
-      annotations: [],
-      rejectedAnnotations: [],
       annotationHistory: {},
-      undoStack: [],
-      classes: tags || [],
-      inputSentences: [],
-      originalText: "",
-      separator: "\n",
-      enableKeyboardShortcuts: false,
       annotationPrecision: "word",
-      // current state
+      annotations: [],
+      classes: tags || [],
       currentAnnotation: {},
       currentClass: (tags && tags[0]) || {},
       currentIndex: 0,
-      currentSentence: "",
       currentPage: "start",
+      currentSentence: "",
       fileName: "",
+      inputSentences: [],
       lastSavedTimestamp: null,
+      originalText: "",
+      rejectedAnnotations: [],
+      separator: "\n",
+      undoStack: [],
     };
   },
-  getters,
   mutations,
   actions,
 };
