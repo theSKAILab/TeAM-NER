@@ -38,7 +38,7 @@ export default {
           {
             entities: annotation.entities.length? annotation.entities.map(entity => {
               //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.currentState, annotation.annotationHistory, false
-              let history = entity.history || [];  // Ensure history is initialized
+              let history = entity.history;  // Ensure history is initialized
               const newHistoryEntry = [
                 entity.currentState, // Current status of the entity
                 this.formatDate(new Date()),

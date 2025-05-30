@@ -24,12 +24,8 @@ class TokenManager {
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
         var annotation = currentAnnotation.entities[i];
 
-        var entityName = annotation.labelClass.name;
-        var entityClass = this.classes.find(c => c.name == entityName);
-        if (!entityClass) {
-          entityClass = { "name": entityName };
-        }
-        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.currentState);
+        annotation.labelClass = this.classes.find(c => c.name == annotation.labelClass.name) || {"name": annotation.labelClass.name};
+        this.addBlockFromBlock(annotation);
       }
     }
   }
@@ -55,7 +51,7 @@ class TokenManager {
       block.end,
       block.labelClass,
       block.currentState,
-      block.annotationHistory,
+      block.history,
     )
   }
 
@@ -68,7 +64,7 @@ class TokenManager {
    * @param {Number} _class the id of the class to highlight
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
    */
-  addNewBlock(_start, _end, _class, currentState = "Candidate", page = "annotate") {
+  addNewBlock(_start, _end, _class, currentState = "Candidate", history = [], page = "annotate") {
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
@@ -80,7 +76,7 @@ class TokenManager {
       let currentToken = this.tokens[i];
       if (currentToken.start >= selectionEnd && selectedTokens.length) {
         // token is first after the selection
-        appendNewBlock(selectedTokens, _class, newTokens); // Append selected tokens with updated attributes
+        appendNewBlock(selectedTokens, _class, newTokens, history); // Append selected tokens with updated attributes
         selectedTokens = []; // Ensure selected tokens are cleared after use
         newTokens.push(currentToken);
       } else if (currentToken.end >= selectionStart && currentToken.start < selectionEnd) {
@@ -104,13 +100,13 @@ class TokenManager {
 
 
     if (selectedTokens.length) {
-      appendNewBlock(selectedTokens, _class, newTokens); // Append selected tokens with updated attributes
+      appendNewBlock(selectedTokens, _class, newTokens, history); // Append selected tokens with updated attributes
       selectedTokens = []; // Ensure selected tokens are cleared after use
       //newTokens.push(currentToken);
     }
     // Update the tokens array with new tokens
     this.tokens = newTokens;
-    function appendNewBlock(tokens, _class, tokensArray) {
+    function appendNewBlock(tokens, _class, tokensArray, history) {
       if (tokens.length) {
         let newBlock = {
           type: "token-block",
@@ -121,6 +117,7 @@ class TokenManager {
           classId: _class.id || 0,
           currentState: currentState,
           reviewed: false,
+          history: history
         };
         tokensArray.push(newBlock);
       }
@@ -158,9 +155,8 @@ class TokenManager {
         const historyEntry = {
           start: b.start,
           end: b.end,
-          history: b.annotationHistory,
+          history: b.history,
           currentState: b.currentState,
-          name: b.name,
           labelClass: b.labelClass,
           reviewed: b.reviewed,
         }
@@ -172,7 +168,7 @@ class TokenManager {
       const historyEntry = {
         start: b.start,
         end: b.end,
-        history: b.annotationHistory,
+        history: b.history,
         currentState: "Rejected",
         name: b.name,
         labelClass: b.labelClass,
