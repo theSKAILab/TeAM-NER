@@ -16,8 +16,7 @@ class TokenManager {
       start: t[0],
       end: t[1],
       text: t[2],
-      humanOpinion: true,
-      isSymbolActive: 0, // Default humanOpinion to true for all initial tokens
+      currentState: "Candidate",
     }));
     this.words = tokens.map(t => t[2]);
     if (currentAnnotation != undefined) {
@@ -25,12 +24,12 @@ class TokenManager {
       for (let i = 0; i < currentAnnotation.entities.length; i++) {
         var annotation = currentAnnotation.entities[i];
 
-        var entityName = annotation.label;
+        var entityName = annotation.labelClass.name;
         var entityClass = this.classes.find(c => c.name == entityName);
         if (!entityClass) {
           entityClass = { "name": entityName };
         }
-        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.status, annotation.isSymbolActive);
+        this.addNewBlock(annotation.start, annotation.end, entityClass, annotation.currentState);
       }
     }
   }
@@ -41,8 +40,8 @@ class TokenManager {
     for (let i = 0; i < this.tokens.length; i++) {
       let currentToken = this.tokens[i];
       if (currentToken.type === "token-block") {
-        if ((start > currentToken.start && start < currentToken.end) ||
-            (end > currentToken.start && end < currentToken.end))
+        if ((start >= currentToken.start && start <= currentToken.end) ||
+            (end >= currentToken.start && end <= currentToken.end))
         // start is inside a token block
         overlappingBlocks.push(currentToken);
       }
@@ -54,10 +53,9 @@ class TokenManager {
     this.addNewBlock(
       block.start,
       block.end,
-      this.classes.find(c => c.id == block.classId) || { name: block.label, color: block.backgroundColor },
-      block.status,
+      block.labelClass,
+      block.currentState,
       block.annotationHistory,
-      block.isSymbolActive,
     )
   }
 
@@ -70,7 +68,7 @@ class TokenManager {
    * @param {Number} _class the id of the class to highlight
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
    */
-  addNewBlock(_start, _end, _class, status = "Candidate", isSymbolActive = 0, page = "annotate") {
+  addNewBlock(_start, _end, _class, currentState = "Candidate", page = "annotate") {
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
@@ -119,15 +117,10 @@ class TokenManager {
           start: tokens[0].start,
           end: tokens[tokens.length - 1].end,
           tokens: tokens,
-          humanOpinion: true,
-          label: _class.name,
+          labelClass: _class,
           classId: _class.id || 0,
-          backgroundColor: _class.color || null,
-          // Set these attributes for all token-blocks, updating existing blocks as needed
-          isSymbolActive: isSymbolActive,
-          status: status,
-
-          userHasToggled: false,
+          currentState: currentState,
+          reviewed: false,
         };
         tokensArray.push(newBlock);
       }
@@ -166,12 +159,10 @@ class TokenManager {
           start: b.start,
           end: b.end,
           history: b.annotationHistory,
-          status: b.status,
+          currentState: b.currentState,
           name: b.name,
-          label: b.label,
-          isSymbolActive: b.isSymbolActive,
-          ogNLP: b.initiallyNLP,
-          userHasToggled: b.userHasToggled,
+          labelClass: b.labelClass,
+          reviewed: b.reviewed,
         }
         entities.push(historyEntry);
       }
@@ -182,12 +173,10 @@ class TokenManager {
         start: b.start,
         end: b.end,
         history: b.annotationHistory,
-        status: "Rejected",
+        currentState: "Rejected",
         name: b.name,
-        label: b.label,
-        isSymbolActive: 2,
-        ogNLP: b.initiallyNLP,
-        userHasToggled: b.userHasToggled,
+        labelClass: b.labelClass,
+        reviewed: b.reviewed,
       }
       entities.push(historyEntry);
     }

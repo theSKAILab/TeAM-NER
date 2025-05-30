@@ -88,12 +88,13 @@ export default {
       
       // Determine if the selection will overlap with an existing block and add to undo stack accordingly
       var existingBlocks = this.tm.isOverlapping(start, end);
+      console.log("Overlapping blocks: ", existingBlocks);
       if (existingBlocks) {
         this.addUndoOverlapping(existingBlocks, start);
-        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", 1);
+        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", 3);
       } else {
         this.tm.addNewBlock(start, end, this.currentClass, this.currentPage == "annotate"? "Candidate": "Suggested", this.currentPage == "annotate"? 0: 3);
-        this.addUndoCreate(this.tm.getBlockByStart(start));
+        if (this.tm.getBlockByStart(start)) this.addUndoCreate(this.tm.getBlockByStart(start));
       }
 
       selection.empty();
@@ -107,26 +108,6 @@ export default {
     onRemoveBlock(blockStart) {
       this.addUndoDelete(this.tm.getBlockByStart(blockStart));
       this.tm.removeBlock(blockStart);
-      this.save();
-    },
-    /**
-     * Changes TokenBlock label in the TokenManager
-     * @param {Number} blockStart  - The start position of the block to change
-     */
-    onReplaceBlockLabel(blockStart) {
-      this.addUndoUpdate(this.tm.getBlockByStart(blockStart));
-      // Get the start and end positions of the existing block before deleting it
-      const existingBlock = this.tm.getBlockByStart(blockStart);
-      const start = existingBlock.start;
-      const end = existingBlock.end;
-
-      // Remove the existing block
-      this.tm.removeBlock(blockStart);
-
-      // Create a new block with the same start and end, but with the current tag/label/class
-      if (start !== undefined && end !== undefined) {
-        this.tm.addNewBlock(start, end, this.currentClass, existingBlock.status, existingBlock.isSymbolActive);
-      }
       this.save();
     },
     /**

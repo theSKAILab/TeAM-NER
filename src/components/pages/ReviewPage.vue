@@ -2,11 +2,18 @@
   <div>
     <classes-block />
     <div class="q-pa-lg" style="height: calc(100vh - 190px); overflow-y:scroll;">
-      <component :is="t.type === 'token' ? 'Token' : 'TokenBlock'" v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
-        :token="t" :class="[t.userHasToggled ? 'user-active' : 'user-inactive']" :isSymbolActive="t.isSymbolActive"
-        :backgroundColor="t.backgroundColor" :humanOpinion="t.humanOpinion"
-        @update-symbol-state="handleSymbolUpdate(t.start, $event.newSymbolState)"
-        @remove-block="onRemoveBlock" @replace-block-label="onReplaceBlockLabel" @user-toggle="handleUserToggle"/>
+      <component 
+        :is="t.type === 'token' ? 'Token' : 'TokenBlock'" 
+        v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
+        :token="t"
+        :class="[t.reviewed ? 'user-active' : 'user-inactive']"
+        :backgroundColor="t.backgroundColor" 
+        @remove-block="onRemoveBlock" 
+        @user-toggle="handleUserToggle"
+        v-model:currentState="t.currentState"
+        v-model:labelClass="t.labelClass"
+        v-model:reviewed="t.reviewed"
+      />
     </div>
     <info-bar />
   </div>
