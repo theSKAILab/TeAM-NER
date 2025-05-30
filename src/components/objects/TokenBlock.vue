@@ -1,5 +1,5 @@
 <template>
-  <mark :class="['bg-' + this.labelClass.color, { 'shadow-unreviewed': !this.reviewed }]">
+  <mark :class="['bg-' + this.labelClass.color, { 'shadow-unreviewed': !this.reviewed }]" style="margin-left: 5px; margin-right: 5px;">
     <Token v-for="t in token.tokens" :key="t.start" :token="t" />
     <span class="tag">
       <!-- Toggle status cycle button -->
@@ -30,10 +30,10 @@ export default {
   },
   props: [
     "token",
-    "backgroundColor",
     "currentState", // v-model
     "labelClass", // v-model
     "reviewed", // v-model
+    "history"
   ],
   emits: [
     'update:currentState', // v-model

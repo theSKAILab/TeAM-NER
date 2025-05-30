@@ -9,10 +9,17 @@ export default {
       tm: new TokenManager([]),
     };
   },
+  watch: {
+    tm: {
+      handler() {
+        this.save();
+      },
+      deep: true,
+    }
+  },
   methods: {
     ...mapMutations(["currentPage", "nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate","addUndoOverlapping"]),
     undo() {
-        console.log({...this.undoStack})
         if (this.undoStack.length > 0) {
             const lastAction = this.undoStack.pop();
             switch (lastAction.type) {
