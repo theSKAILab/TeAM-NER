@@ -1,17 +1,17 @@
 <template>
-  <mark :class="['bg-' + backgroundColor, { 'shadow-unreviewed': !this.userHasToggled, 'bg-red': !token.humanOpinion }]">
+  <mark :class="['bg-' + this.labelClass.color, { 'shadow-unreviewed': !this.reviewed }]">
     <Token v-for="t in token.tokens" :key="t.start" :token="t" />
     <span class="tag">
       <!-- Toggle status cycle button -->
-      <i v-if="this.currentPage === 'review'" :class="symbolClass" @click="toggleSymbol"></i>
-      {{ token.label }}
+      <i v-if="this.currentPage === 'review'" :class="this.states[this.currentState].icon" @click="cycleCurrentStatus"></i>
+      {{ this.labelClass.name }}
       <!-- Replace label button (double arrows) -->
       <q-btn icon="fa fa-exchange-alt" round flat size="xs" text-color="grey-7"
         title="Change label to currently selected label"
         @click="changeClass" />
       <!-- Delete label button (X) -->
-      <q-btn v-if="this.currentPage === 'annotate'" icon="fa fa-times-circle" round flat size="xs" text-color="grey-7" title="Delete annotation" @click.stop="recordActionAndEmit('remove-block', token.start)" />
-      <q-btn v-if="this.currentPage === 'review'" :icon="reviewedIconClass" round flat size="xs" text-color="grey-9"
+      <q-btn v-if="this.currentPage === 'annotate'" icon="fa fa-times-circle" round flat size="xs" text-color="grey-7" title="Delete annotation" @click.stop="removeBlock" />
+      <q-btn v-if="this.currentPage === 'review'" :icon="this.reviewed? 'fas fa-toggle-on' : 'fas fa-toggle-off'" round flat size="xs" text-color="grey-9"
         title="Dark indicates that you have reviewed this annotation, light means you have not."
         @click.stop="toggleReviewed" />
     </span>
@@ -28,66 +28,53 @@ export default {
   components: {
     Token,
   },
-  props: {
-    token: Object,
-    backgroundColor: String,
-    humanOpinion: Boolean,
-    isSymbolActive: {
-      type: Number,
-      default: 0
-    }
-  },
+  props: [
+    "token",
+    "backgroundColor",
+    "currentState", // v-model
+    "labelClass", // v-model
+    "reviewed", // v-model
+  ],
+  emits: [
+    'update:currentState', // v-model
+    'update:labelClass', // v-model
+    'update:reviewed', // v-model
+  ],
   data() {
     return {
-      userHasToggled: false,
-      candidateStatus: false,
-      isReviewed: false,
+      states: {
+        "Candidate": {numeric: 0, icon: "fas fa-hourglass-start fa-lg"},
+        "Accepted": {numeric: 1, icon: "fas fa-thumbs-up fa-lg"},
+        "Rejected": {numeric: 2, icon: "fas fa-skull-crossbones fa-lg"},
+        "Suggested": {numeric: 3, icon: "fas fa-history fa-lg"}
+      },
     };
   },
   computed: {
-    ...mapState(["currentPage"]),
-    symbolClass() {
-      switch (this.isSymbolActive) {
-        case 0: return "fas fa-hourglass-start fa-lg"; // Candidate - Hourglass implies waiting or potential
-        case 1: return "fas fa-thumbs-up fa-lg"; //accepted
-        case 2: return "fas fa-skull-crossbones fa-lg"; //rejected
-        case 3: return "fas fa-history fa-lg"; // Suggested
-        default: return "fas fa-question-circle fa-lg";
-      }
-    },
-    reviewedIconClass() {
-      return this.userHasToggled ? 'fas fa-toggle-on' : 'fas fa-toggle-off';
-    },
+    ...mapState(["currentPage", "currentClass"]),
   },
   methods: {
-    ...mapMutations(["addUndoUpdate", "addUndoRemove"]),
-    toggleSymbol() {
+    ...mapMutations(["addUndoUpdate"]),
+    cycleCurrentStatus() {
       this.addUndoUpdate({ ...this.token})
-      let nextState = (this.isSymbolActive + 1) % 3;
-      this.userHasToggled = true;
-      this.$emit('update-symbol-state', {
-        tokenStart: this.token.start,
-        newSymbolState: nextState
-      });
-    },
-    toggleReviewed() {
-      this.userHasToggled = !this.userHasToggled;
-      this.$emit('user-toggle', this.token.start);
-    },
-    recordActionAndEmit(action, payload) {
-      this.$emit(action, payload);
+      let nextState = Object.keys(this.states)[(this.states[this.currentState].numeric + 1) % 3]; // Cycle through Candidate, Accepted, Rejected
+      this.setReviewed(true);
+      this.updateState(nextState)
     },
     changeClass() {
+      this.addUndoUpdate({ ...this.token });
+      this.setReviewed(true);
       if (this.currentPage === 'review') {
-          this.$emit('update-symbol-state', {
-            tokenStart: this.token.start,
-            newSymbolState: 3, // state for suggested
-            oldSymbolState: this.isSymbolActive
-          });
+          this.updateState("Suggested");
       }
-      this.recordActionAndEmit('replace-block-label', this.token.start)
+      this.updateLabelClass();
     },
-  },
+    updateState(newState) { this.$emit('update:currentState', newState); },
+    updateLabelClass() { this.$emit('update:labelClass', this.currentClass); },
+    removeBlock() { this.$emit('remove-block', this.token.start); },
+    toggleReviewed() { this.$emit('update:reviewed', !this.reviewed); },
+    setReviewed(state) { this.$emit('update:reviewed', state); },
+  }
 };
 </script>
 

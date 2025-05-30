@@ -63,19 +63,12 @@ const mutations = {
               start: entity[0],
               end: entity[1],
               history: thisAnnotationHistory,
-              status: latestEntry[0],
+              currentState: latestEntry[0],
               name: latestEntry[2],
-              label: latestEntry[3],
-              isSymbolActive: mutations.determineSymbolState(latestEntry[0]),
-              ogNLP: thisAnnotationHistory[0][2] === "nlp",
+              labelClass: {name: latestEntry[3]},
             }
-            if (historyEntry.isSymbolActive == 2) {
-              // TODO: LIKELY CAUSE OF REJECTED ANNOTATIONS BEING AN ISSUE
-              // If the status is "Rejected", add it to the rejected annotations
-              state.rejectedAnnotations.push(historyEntry);
-            } else {
-              sentenceOriginalState.push(historyEntry);
-            }
+           
+            sentenceOriginalState.push(historyEntry);
 
             // Replace the entity with the history entry
             file.annotations[i][1].entities[j] = historyEntry;
@@ -97,15 +90,6 @@ const mutations = {
     if (file.classes && Array.isArray(file.classes)) {
        mutations.loadClasses(state, file.classes);
     }
-  },
-  // TODO: REPLACE HELPER FUNCTIONS SPREAD THRU CODE WITH THIS
-  determineSymbolState(status) {
-      switch (status) {
-        case "Accepted": return 1;
-        case "Rejected": return 2;
-        case "Candidate": return 0;
-        default: return 0; // Default to candidate if unrecognized status
-      }
   },
   //TODO: REPLACE COMMIT CALLS WITH THIS MUTATION
   addClass(state, payload) {

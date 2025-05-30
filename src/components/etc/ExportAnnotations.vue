@@ -37,23 +37,23 @@ export default {
           annotation.text,  // Text directly in the array
           {
             entities: annotation.entities.length? annotation.entities.map(entity => {
-              //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive
+              //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.currentState, annotation.annotationHistory, false
               let history = entity.history || [];  // Ensure history is initialized
               const newHistoryEntry = [
-                entity.status,
+                entity.currentState, // Current status of the entity
                 this.formatDate(new Date()),
                 annotator,
-                entity.label, // The class or label from the entity
+                entity.labelClass.name, // The class or label from the entity
               ];
-              if (entity.userHasToggled && history[history.length-1][2] != annotator && history[history.length-1][0] == entity.status) 
+              if (entity.reviewed && history[history.length-1][2] != annotator && history[history.length-1][0] == entity.currentState) 
               {
                 history.push([history[history.length-1][0],this.formatDate(new Date()),annotator,history[history.length-1][3]]) //  Current reviewer "concurs" with previous reviewer and is not the same as previous reviewer
               }
-              else if ((entity.status == "Candidate" || entity.status == "Suggested") && history.length == 0) 
+              else if ((entity.currentState == "Candidate" || entity.currentState == "Suggested") && history.length == 0) 
               {
                 history.push(newHistoryEntry); // New annotation in Annotate or Review mode
               }
-              else if (history[history.length-1][0] != entity.status) 
+              else if (history[history.length-1][0] != entity.currentState) 
               {
                 history.push(newHistoryEntry); // Status change from previous entry in history
               }
