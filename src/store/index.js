@@ -178,7 +178,7 @@ const mutations = {
     state.undoStack.push(newUndo);
     state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
   },
-  addUndoOverlapping(state, oldBlocks, newBlockStart) {
+  addUndoOverlapping(state, {oldBlocks, newBlockStart}) {
     var newUndo = {
       type: "overlapping",
       overlappingBlocks: oldBlocks,

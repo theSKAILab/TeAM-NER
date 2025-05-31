@@ -59,8 +59,8 @@ class TokenManager {
    * Creates a new token block with the tokens whose starts match the input
    * parameters
    *
-   * @param {Number} start 'start' value of the token forming the start of the token block
-   * @param {Number} end 'start' value of the token forming the end of the token block
+   * @param {Number} _start 'start' value of the token forming the start of the token block
+   * @param {Number} _end 'start' value of the token forming the end of the token block
    * @param {Number} _class the id of the class to highlight
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
    */
@@ -84,10 +84,12 @@ class TokenManager {
         // token is inside the selection
         if (currentToken.type == "token-block") {
           if (page == "review") {
-            this.rejectedAnnotations.push(currentToken);
+            currentToken.currentState = "Rejected";
+            // this.rejectedAnnotations.push(currentToken);
+          } else {
+            this.removeBlock(currentToken.start);
+            i--
           }
-          this.removeBlock(currentToken.start);
-          i--
         } else if (currentToken.type == "token") {
           selectedTokens.push(currentToken);
         }

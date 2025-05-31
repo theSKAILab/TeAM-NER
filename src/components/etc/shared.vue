@@ -95,12 +95,11 @@ export default {
       
       // Determine if the selection will overlap with an existing block and add to undo stack accordingly
       var existingBlocks = this.tm.isOverlapping(start, end);
-      console.log("Overlapping blocks: ", existingBlocks);
       if (existingBlocks) {
-        this.addUndoOverlapping(existingBlocks, start);
-        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", 3);
+        this.addUndoOverlapping({"oldBlocks": existingBlocks, "newBlockStart": start});
+        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", null, this.currentPage);
       } else {
-        this.tm.addNewBlock(start, end, this.currentClass, this.currentPage == "annotate"? "Candidate": "Suggested", this.currentPage == "annotate"? 0: 3);
+        this.tm.addNewBlock(start, end, this.currentClass, "Candidate", null, this.currentPage);
         if (this.tm.getBlockByStart(start)) this.addUndoCreate(this.tm.getBlockByStart(start));
       }
 
