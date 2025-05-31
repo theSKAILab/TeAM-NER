@@ -23,12 +23,12 @@
 </template>
 
 <script>
-import MenuBar from "./components/menubar/MenuBar.vue";
+import MenuBar from "./components/toolbars/MenuBar.vue";
 import StartPage from "./components/pages/StartPage.vue";
 import AnnotationPage from "./components/pages/AnnotationPage.vue";
 import ReviewPage from "./components/pages/ReviewPage.vue";
 import DragNDropOverlay from "./components/etc/DragNDropOverlay.vue";
-import ExitDialog from "./components/etc/ExitDialog.vue";
+import ExitDialog from "./components/dialogs/ExitDialog.vue";
 import { mapState, mapMutations } from "vuex";
 import { useQuasar } from "quasar";
 

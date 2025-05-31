@@ -1,12 +1,8 @@
-
-<template>
-  <q-item clickable v-close-popup @click="promptForNameAndExport()" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-    <q-item-section>Save...</q-item-section>
-  </q-item>
-</template>
 <script>
 import { mapState } from 'vuex'
-import { exportFile } from './utils'
+import { save } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
+import { documentDir } from "@tauri-apps/api/path";
 
 export default {
   name: 'ExportAnnotations',
@@ -20,7 +16,8 @@ export default {
           message: 'Please enter a name for the exported annotations file',
           prompt: {
             model: '',
-            type: 'text' // optional
+            type: 'text', // optional
+            isValid: val => val.length > 2,
           },
           cancel: true,
           persistent: true
@@ -40,24 +37,23 @@ export default {
           annotation.text,  // Text directly in the array
           {
             entities: annotation.entities.length? annotation.entities.map(entity => {
-              //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.status, annotation.annotationHistory, false, annotation.isSymbolActive
-              let history = entity.history || [];  // Ensure history is initialized
-              console.log(entity)
+              //annotation.start, annotation.end, _class, annotation.ogNLP, annotation.ogNLP, true, annotation.name, annotation.currentState, annotation.annotationHistory, false
+              let history = entity.history;  // Ensure history is initialized
               const newHistoryEntry = [
-                entity.status,
+                entity.currentState, // Current status of the entity
                 this.formatDate(new Date()),
                 annotator,
-                entity.label, // The class or label from the entity
+                entity.labelClass.name, // The class or label from the entity
               ];
-              if (entity.userHasToggled && history[history.length-1][2] != annotator && history[history.length-1][0] == entity.status) 
+              if (entity.reviewed && history[history.length-1][2] != annotator && history[history.length-1][0] == entity.currentState) 
               {
                 history.push([history[history.length-1][0],this.formatDate(new Date()),annotator,history[history.length-1][3]]) //  Current reviewer "concurs" with previous reviewer and is not the same as previous reviewer
               }
-              else if ((entity.status == "Candidate" || entity.status == "Suggested") && history.length == 0) 
+              else if ((entity.currentState == "Candidate" || entity.currentState == "Suggested") && history.length == 0) 
               {
                 history.push(newHistoryEntry); // New annotation in Annotate or Review mode
               }
-              else if (history[history.length-1][0] != entity.status) 
+              else if (history[history.length-1][0] != entity.currentState) 
               {
                 history.push(newHistoryEntry); // Status change from previous entry in history
               }
@@ -73,9 +69,38 @@ export default {
         ])
       };
 
-      const jsonStr = JSON.stringify(output, null, 2); // Pretty print JSON
+      const content = JSON.stringify(output, null, 2); // Pretty print JSON
       try {
-        await exportFile(jsonStr, `${annotator}-annotations.json`);
+        // file saving logic
+        if (typeof window.rpc === "undefined") {
+          let element = document.createElement("a");
+          element.setAttribute(
+            "href",
+            "data:text/plain;charset=utf-8," + encodeURIComponent(content)
+          );
+          element.setAttribute("download", `${annotator}-annotations.json`);
+          element.style.display = "none";
+          document.body.appendChild(element);
+          element.click();
+          document.body.removeChild(element);
+        } else {
+          save({
+            defaultPath: await documentDir(),
+            filters: [
+              { extensions: ["json"], name: "JSON Files (*.json)" },
+              { name: "All files (*.*)", extensions: ["*"] },
+            ],
+          })
+            .then((path) => {
+              if (!path) return;
+              if (!path.match(/.*\.json$/)) path += ".json";
+
+              invoke("save_file", { filepath: path, contents: content })
+                .then((msg) => alert(msg))
+                .catch((e) => alert(e));
+            })
+            .catch((e) => console.log("Save cancelled.", e));
+        }
       } catch (error) {
         console.error("Export failed:", error);
       }

@@ -63,19 +63,12 @@ const mutations = {
               start: entity[0],
               end: entity[1],
               history: thisAnnotationHistory,
-              status: latestEntry[0],
+              currentState: latestEntry[0],
               name: latestEntry[2],
-              label: latestEntry[3],
-              isSymbolActive: mutations.determineSymbolState(latestEntry[0]),
-              ogNLP: thisAnnotationHistory[0][2] === "nlp",
+              labelClass: {name: latestEntry[3]},
             }
-            if (historyEntry.isSymbolActive == 2) {
-              // TODO: LIKELY CAUSE OF REJECTED ANNOTATIONS BEING AN ISSUE
-              // If the status is "Rejected", add it to the rejected annotations
-              state.rejectedAnnotations.push(historyEntry);
-            } else {
-              sentenceOriginalState.push(historyEntry);
-            }
+           
+            sentenceOriginalState.push(historyEntry);
 
             // Replace the entity with the history entry
             file.annotations[i][1].entities[j] = historyEntry;
@@ -98,15 +91,7 @@ const mutations = {
        mutations.loadClasses(state, file.classes);
     }
   },
-  // TODO: REPLACE HELPER FUNCTIONS SPREAD THRU CODE WITH THIS
-  determineSymbolState(status) {
-      switch (status) {
-        case "Accepted": return 1;
-        case "Rejected": return 2;
-        case "Candidate": return 0;
-        default: return 0; // Default to candidate if unrecognized status
-      }
-  },
+  //TODO: REPLACE COMMIT CALLS WITH THIS MUTATION
   addClass(state, payload) {
     // Check if the class already exists
     const existingClass = state.classes.find((c) => c.name === payload);
@@ -136,7 +121,7 @@ const mutations = {
   },
   removeClass(state, payload) {
     state.classes = state.classes.filter((c) => c.id != payload);
-    if (state.currentClass.id === payload) {
+    if (state.currentClass && state.currentClass.id === payload) {
       state.currentClass = state.classes[0];
     }
   },
@@ -151,36 +136,21 @@ const mutations = {
     state.annotations = [];
     state.currentAnnotation = {};
   },
-  setSeparator(state, payload) {
-    state.separator = payload;
-    state.inputSentences = state.originalText.split(state.separator).map((s, i) => ({ id: i, text: s }));
-  },
-  setAnnotationPrecision(state, payload) {
-    state.annotationPrecision = payload;
-  },
-  setKeyboardShortcuts(state, payload) {
-    state.enableKeyboardShortcuts = payload;
-  },
   nextSentence(state) {
     if (state.currentIndex < state.inputSentences.length - 1) {
       state.currentIndex += 1;
       state.currentAnnotation = state.annotations[state.currentIndex] || {};
-    } else {
-      //alert("You have completed all the sentences");
     }
   },
   previousSentence(state) {
     if (state.currentIndex > 0) {
       state.currentIndex -= 1;
       state.currentAnnotation = state.annotations[state.currentIndex];
-    } else {
-      alert("You are at the beginning of all sentences");
     }
   },
   resetIndex(state) {
     state.currentIndex = 0;
   },
-
   // Global Undo Stack
   addUndoCreate(state, block) {
     var newUndo = {
@@ -207,10 +177,17 @@ const mutations = {
     };
     state.undoStack.push(newUndo);
     state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
+  },
+  addUndoOverlapping(state, {oldBlocks, newBlockStart}) {
+    var newUndo = {
+      type: "overlapping",
+      overlappingBlocks: oldBlocks,
+      newBlockStart: newBlockStart,
+    }
+    state.undoStack.push(newUndo);
+    state.undoStack.sort((a, b) => b.timestamp - a.timestamp);
   }
 };
-
-const getters = {};
 
 const actions = {
   createNewClass({ commit, state }, className) {
@@ -230,35 +207,28 @@ const actions = {
   },
 };
 
-window.addEventListener("beforeunload", async (event) => {
-  event.returnValue = "Please make sure you export annotations before closing the file.";
-});
-
 export default {
   state() {
     let tags = LocalStorage.getItem("tags");
     return {
-      annotations: [],
-      rejectedAnnotations: [],
       annotationHistory: {},
-      undoStack: [],
-      classes: tags || [],
-      inputSentences: [],
-      originalText: "",
-      separator: "\n",
-      enableKeyboardShortcuts: false,
       annotationPrecision: "word",
-      // current state
+      annotations: [],
+      classes: tags || [],
       currentAnnotation: {},
       currentClass: (tags && tags[0]) || {},
       currentIndex: 0,
-      currentSentence: "",
       currentPage: "start",
+      currentSentence: "",
       fileName: "",
+      inputSentences: [],
       lastSavedTimestamp: null,
+      originalText: "",
+      rejectedAnnotations: [],
+      separator: "\n",
+      undoStack: [],
     };
   },
-  getters,
   mutations,
   actions,
 };

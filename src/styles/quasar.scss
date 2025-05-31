@@ -50,6 +50,24 @@ body.body--dark {
   border: 1px solid $grey-5;
   border-radius: 0px !important;
   margin-top: 9px !important;
+  margin-left: -5px !important;
+  padding: 5px;
+  width: 200px;
+}
+
+.q-menu-open-button {
+  display: inline-block;
+}
+
+.q-menu-open-button:first-letter  {
+  text-decoration: underline;
+}
+
+.keyboard-tip {
+  position: absolute;
+  right: 10px;
+  text-align: right;
+  color: #888;
 }
 
 .menu-file-picker {
