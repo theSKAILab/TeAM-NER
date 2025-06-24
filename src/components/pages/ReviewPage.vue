@@ -3,8 +3,9 @@
     <classes-block />
     <div class="q-pa-lg" style="height: calc(100vh - 190px); overflow-y:scroll;">
       <component 
+        v-for="t in eligibleTokens" 
+        :key="`${t.type}-${t.start}`"
         :is="t.type === 'token' ? 'Token' : 'TokenBlock'" 
-        v-for="t in tm.tokens" :key="`${t.type}-${t.start}`"
         :token="t"
         :class="[t.reviewed ? 'user-active' : 'user-inactive']"
         :history="t.history" 
@@ -53,7 +54,20 @@ export default {
       "annotationPrecision",
       "lastSavedTimestamp",
       "undoStack"
-    ])
+    ]),
+    eligibleTokens() {
+      var renderedList = [];
+      for (let i = 0; i < this.tm.tokens.length; i++) {
+        let t = this.tm.tokens[i];
+        let tokenOverlapping = this.tm.isOverlapping(t.start, t.end);
+        if (!tokenOverlapping) {
+          renderedList.push(t);
+        } else if (t.currentState != 'Rejected' && tokenOverlapping != null) {
+          renderedList.push(t);
+        }
+      }
+      return renderedList;
+    }
   },
   watch: {
     inputSentences() {

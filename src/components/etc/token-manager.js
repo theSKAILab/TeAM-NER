@@ -30,16 +30,21 @@ class TokenManager {
     }
   }
 
+  // Todo if there is a block somewhere in the middle of the range, return it
   isOverlapping(start, end) {
     var overlappingBlocks = [];
 
     for (let i = 0; i < this.tokens.length; i++) {
       let currentToken = this.tokens[i];
       if (currentToken.type === "token-block") {
-        if ((start >= currentToken.start && start <= currentToken.end) ||
-            (end >= currentToken.start && end <= currentToken.end))
-        // start is inside a token block
-        overlappingBlocks.push(currentToken);
+        if (
+          (
+            (start >= currentToken.start && start <= currentToken.end) || 
+            (end >= currentToken.start && end <= currentToken.end)
+          )
+          ) {
+              overlappingBlocks.push(currentToken);
+            }
       }
     }
     return overlappingBlocks.length > 0? overlappingBlocks : null;
@@ -51,6 +56,7 @@ class TokenManager {
       block.end,
       block.labelClass,
       block.currentState,
+      "annotate", // this field does not matter here as the block already has the data required
       block.history,
     )
   }
@@ -59,18 +65,20 @@ class TokenManager {
    * Creates a new token block with the tokens whose starts match the input
    * parameters
    *
-   * @param {Number} start 'start' value of the token forming the start of the token block
-   * @param {Number} end 'start' value of the token forming the end of the token block
+   * @param {Number} _start 'start' value of the token forming the start of the token block
+   * @param {Number} _end 'start' value of the token forming the end of the token block
    * @param {Number} _class the id of the class to highlight
    * @param {Boolean} isHumanOpinion Separate nlp vs human made annotation
    */
-  addNewBlock(_start, _end, _class, currentState = "Candidate", history = [], page = "annotate") {
+  addNewBlock(_start, _end, _class, currentState = "Candidate", page = "annotate", history = []) {
     // Directly apply humanOpinion to the block structure
     let selectedTokens = [];
     let newTokens = [];
 
     let selectionStart = _end < _start ? _end : _start;
     let selectionEnd = _end > _start ? _end : _start;
+
+    let overlappedBlock = null;
 
     for (let i = 0; i < this.tokens.length; i++) {
       let currentToken = this.tokens[i];
@@ -84,10 +92,19 @@ class TokenManager {
         // token is inside the selection
         if (currentToken.type == "token-block") {
           if (page == "review") {
-            this.rejectedAnnotations.push(currentToken);
+            // Save what was the existing block before stripping it
+            currentToken.previousState = currentToken.currentState;
+            currentToken.currentState = "Rejected";
+            overlappedBlock = {...currentToken};
+            // Remove existing block
+            this.removeBlock(currentToken.start);
+
+            // Backup
+            i--
+          } else {
+            this.removeBlock(currentToken.start);
+            i--
           }
-          this.removeBlock(currentToken.start);
-          i--
         } else if (currentToken.type == "token") {
           selectedTokens.push(currentToken);
         }
@@ -98,13 +115,20 @@ class TokenManager {
       }
     }
 
-
     if (selectedTokens.length) {
       appendNewBlock(selectedTokens, _class, newTokens, history); // Append selected tokens with updated attributes
       selectedTokens = []; // Ensure selected tokens are cleared after use
       //newTokens.push(currentToken);
     }
+
+    // If there is an overlapped block and we are in review page, add it back to the new tokens array
+    if (overlappedBlock && page == "review") {
+      // Add the overlapped block back to the new tokens array
+      newTokens.push(overlappedBlock);
+    }
+
     // Update the tokens array with new tokens
+    newTokens = newTokens.sort((a, b) => a.start - b.start);
     this.tokens = newTokens;
     function appendNewBlock(tokens, _class, tokensArray, history) {
       if (tokens.length) {
@@ -129,14 +153,17 @@ class TokenManager {
    *
    * @param {Number} blockStart 'start' value of the token block to remove
    */
-  removeBlock(blockStart) {
+  removeBlock(blockStart, reintroduceTokens = true) {
     let newTokens = [];
     for (let i = 0; i < this.tokens.length; i++) {
+      // If there is a token block that is targeted for removal
+      // Remove it and add the tokens back to the array
+      // Note: Skip this step for instances like when undoing an overlapping block action
       if (
         this.tokens[i].type === "token-block" &&
         this.tokens[i].start === blockStart
       ) {
-        newTokens.push(...this.tokens[i].tokens);
+        if (reintroduceTokens) newTokens.push(...this.tokens[i].tokens);
       } else {
         newTokens.push(this.tokens[i]);
       }
@@ -163,20 +190,7 @@ class TokenManager {
         entities.push(historyEntry);
       }
     }
-    for (let i = 0; i < this.rejectedAnnotations.length; i++) {
-      let b = this.rejectedAnnotations[i];
-      const historyEntry = {
-        start: b.start,
-        end: b.end,
-        history: b.history,
-        currentState: "Rejected",
-        name: b.name,
-        labelClass: b.labelClass,
-        reviewed: b.reviewed,
-      }
-      entities.push(historyEntry);
-    }
-    return entities;
+    return entities.sort((a, b) => a.start - b.start);
   }
 
   // Returns a token-block given its starting index, else returns null
@@ -189,6 +203,10 @@ class TokenManager {
     }
 
     return null;
+  }
+
+  removeDuplicateBlocks() {
+    this.tokens = [...new Set(this.tokens.sort((a, b) => a.start - b.start))];
   }
 }
 

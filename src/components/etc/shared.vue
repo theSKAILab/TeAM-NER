@@ -1,5 +1,5 @@
 <script>
-import { mapMutations } from "vuex";
+import { mapMutations, mapState } from "vuex";
 import TokenManager from "../etc/token-manager";
 
 export default {
@@ -17,31 +17,43 @@ export default {
       deep: true,
     }
   },
+  computed: {
+    ...mapState(["currentPage"])
+  },
   methods: {
-    ...mapMutations(["currentPage", "nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate","addUndoOverlapping"]),
+    ...mapMutations(["nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate","addUndoOverlapping"]),
     undo() {
         if (this.undoStack.length > 0) {
             const lastAction = this.undoStack.pop();
+            console.log("Undoing action:", lastAction);
             switch (lastAction.type) {
             case 'remove':
               this.tm.removeBlock(lastAction.start);
-              this.save();
               break;
             case 'create':
               this.tm.addBlockFromBlock(lastAction.oldBlock);
-              this.save();
               break;
             case 'update':
               this.tm.removeBlock(lastAction.oldBlock.start);
               this.tm.addBlockFromBlock(lastAction.oldBlock);
               break;
             case 'overlapping':
-              this.tm.removeBlock(lastAction.newBlockStart);
+              console.log(lastAction)
+              // Gross fix
+              // Basically remove all of the mentioned blocks and add them back with their previous state
               for(var i = 0; i < lastAction.overlappingBlocks.length; i++) {
-                this.tm.addBlockFromBlock(lastAction.overlappingBlocks[i]);
+                this.tm.removeBlock(lastAction.overlappingBlocks[i].start);
+              }
+              this.tm.removeBlock(lastAction.newBlockStart, true);
+              // Add the old blocks back
+              console.log(this.tm.tokens)
+              this.tm.removeDuplicateBlocks();
+              for(i = 0; i < lastAction.overlappingBlocks.length; i++) {
+                this.tm.addNewBlock(lastAction.overlappingBlocks[i].start, lastAction.overlappingBlocks[i].end, lastAction.overlappingBlocks[i].labelClass, lastAction.overlappingBlocks[i].previousState, this.currentPage);
               }
               break;
             }
+            this.save();
         }
     },
     undoAll() {
@@ -95,12 +107,11 @@ export default {
       
       // Determine if the selection will overlap with an existing block and add to undo stack accordingly
       var existingBlocks = this.tm.isOverlapping(start, end);
-      console.log("Overlapping blocks: ", existingBlocks);
       if (existingBlocks) {
-        this.addUndoOverlapping(existingBlocks, start);
-        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", 3);
+        this.addUndoOverlapping({"oldBlocks": existingBlocks, "newBlockStart": start});
+        this.tm.addNewBlock(start, end, this.currentClass, "Suggested", this.currentPage);
       } else {
-        this.tm.addNewBlock(start, end, this.currentClass, this.currentPage == "annotate"? "Candidate": "Suggested", this.currentPage == "annotate"? 0: 3);
+        this.tm.addNewBlock(start, end, this.currentClass, "Candidate", this.currentPage);
         if (this.tm.getBlockByStart(start)) this.addUndoCreate(this.tm.getBlockByStart(start));
       }
 
