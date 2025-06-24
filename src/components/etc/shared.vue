@@ -21,7 +21,7 @@ export default {
     ...mapState(["currentPage"])
   },
   methods: {
-    ...mapMutations(["nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoUpdate","addUndoOverlapping"]),
+    ...mapMutations(["nextSentence", "previousSentence", "resetIndex", "addUndoCreate", "addUndoDelete", "addUndoOverlapping"]),
     undo() {
         if (this.undoStack.length > 0) {
             const lastAction = this.undoStack.pop();
@@ -136,7 +136,6 @@ export default {
         text: this.currentSentence.text,
         entities: this.tm.exportAsAnnotation(),
       });
-      this.$store.lastSavedTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   },
 }

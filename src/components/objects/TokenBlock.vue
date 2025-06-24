@@ -10,7 +10,7 @@
         title="Change label to currently selected label"
         @click="changeClass" />
       <!-- Delete label button (X) -->
-      <q-btn v-if="this.currentPage === 'annotate'" icon="fa fa-times-circle" round flat size="xs" text-color="grey-7" title="Delete annotation" @click.stop="removeBlock" />
+      <q-btn icon="fa fa-times-circle" round flat size="xs" text-color="grey-7" title="Delete annotation" @click.stop="removeBlock" />
       <q-btn v-if="this.currentPage === 'review'" :icon="this.reviewed? 'fas fa-toggle-on' : 'fas fa-toggle-off'" round flat size="xs" text-color="grey-9"
         title="Dark indicates that you have reviewed this annotation, light means you have not."
         @click.stop="toggleReviewed" />
@@ -71,7 +71,15 @@ export default {
     },
     updateState(newState) { this.$emit('update:currentState', newState); },
     updateLabelClass() { this.$emit('update:labelClass', this.currentClass); },
-    removeBlock() { this.$emit('remove-block', this.token.start); },
+    removeBlock() { 
+      if (this.currentPage == 'review') {
+        this.addUndoUpdate({ ...this.token });
+        this.updateState("Rejected");
+        this.setReviewed(true);
+      } else {
+        this.$emit('remove-block', this.token.start); 
+      }
+    },
     toggleReviewed() { this.$emit('update:reviewed', !this.reviewed); },
     setReviewed(state) { this.$emit('update:reviewed', state); },
   }

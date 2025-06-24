@@ -2,104 +2,115 @@
   <q-header bordered>
       <div class="q-pa-sm q-pl-md row items-center">
 
-        <!-- File -->
-        <div class="cursor-pointer non-selectable">
-          <span class="q-menu-open-button" ref="fileMenu">
-            File
-          </span>
-          <q-menu transition-show="jump-down" transition-hide="jump-up">
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup @click="$store.state.currentPage != 'start'? pendingOpen = $refs.file: $refs.file.click()">
-                <q-item-section>
-                  <span>Open</span> 
-                  <span class="keyboard-tip">Ctrl + O</span>
-                </q-item-section>
-              </q-item>
-                <q-item clickable v-close-popup @click="promptForNameAndExport()" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+        <!-- Menu Options -->
+        <span class="col">
+            <!-- File -->
+          <div class="cursor-pointer non-selectable">
+            <span class="q-menu-open-button" ref="fileMenu">
+              File
+            </span>
+            <q-menu transition-show="jump-down" transition-hide="jump-up">
+              <q-list dense style="min-width: 100px">
+                <q-item clickable v-close-popup @click="$store.state.currentPage != 'start'? pendingOpen = $refs.file: $refs.file.click()">
                   <q-item-section>
-                    <span>Save</span> 
-                    <span class="keyboard-tip">Ctrl + S</span>
+                    <span>Open</span> 
+                    <span class="keyboard-tip">Ctrl + O</span>
                   </q-item-section>
                 </q-item>
-              <q-item clickable v-close-popup @click="pendingClose = true;" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section >
-                  <span>Close</span> 
-                  <span class="keyboard-tip">Ctrl + Q</span>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </div>
-        
-        <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
-        
-        <!-- Edit -->
-        <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button" ref="editMenu">
-            Edit
-          </span>
-          <q-menu transition-show="jump-down" transition-hide="jump-up">
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup @click="this.emitter.emit('undo')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>
-                    <span>Undo</span> 
-                    <span class="keyboard-tip">Ctrl + Z</span>
-                </q-item-section>
-              </q-item>
-              <q-item clickable v-close-popup @click="this.emitter.emit('undoAll')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>
-                  <span>Undo All</span> 
-                  <span class="keyboard-tip">Alt + Z</span>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </div>
+                  <q-item clickable v-close-popup @click="promptForNameAndExport()" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                    <q-item-section>
+                      <span>Save</span> 
+                      <span class="keyboard-tip">Ctrl + S</span>
+                    </q-item-section>
+                  </q-item>
+                <q-item clickable v-close-popup @click="pendingClose = true;" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                  <q-item-section >
+                    <span>Close</span> 
+                    <span class="keyboard-tip">Ctrl + Q</span>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </div>
+          
+          <input @change="(e) => {onFileSelected(e)}" type="file" ref="file" accept=".txt,.json" id="fileupload" style="display: none"/>
+          
+          <!-- Edit -->
+          <div class="q-ml-md cursor-pointer non-selectable">
+            <span class="q-menu-open-button" ref="editMenu">
+              Edit
+            </span>
+            <q-menu transition-show="jump-down" transition-hide="jump-up">
+              <q-list dense style="min-width: 100px">
+                <q-item clickable v-close-popup @click="this.emitter.emit('undo')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                  <q-item-section>
+                      <span>Undo</span> 
+                      <span class="keyboard-tip">Ctrl + Z</span>
+                  </q-item-section>
+                </q-item>
+                <q-item clickable v-close-popup @click="this.emitter.emit('undoAll')" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                  <q-item-section>
+                    <span>Undo All</span> 
+                    <span class="keyboard-tip">Alt + Z</span>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </div>
 
-        <!-- Annotator -->
-        <div class="q-ml-md cursor-pointer non-selectable">
-          <span class="q-menu-open-button" ref="annotatorMenu">
-            Annotator
-          </span>
-          <q-menu transition-show="jump-down" transition-hide="jump-up">
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup @click="() => {$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}" :class="$store.state.currentPage == 'start'? 'disabled': ''">
-                <q-item-section>
-                  <span>Change Mode</span> 
-                  <span class="keyboard-tip">Ctrl + M</span>
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </div>
+          <!-- Annotator -->
+          <div class="q-ml-md cursor-pointer non-selectable">
+            <span class="q-menu-open-button" ref="annotatorMenu">
+              Annotator
+            </span>
+            <q-menu transition-show="jump-down" transition-hide="jump-up">
+              <q-list dense style="min-width: 100px">
+                <q-item clickable v-close-popup @click="() => {$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}" :class="$store.state.currentPage == 'start'? 'disabled': ''">
+                  <q-item-section>
+                    <span>Change Mode</span> 
+                    <span class="keyboard-tip">Ctrl + M</span>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
+          </div>
 
-        <!-- Help -->
-        <div class="q-ml-md cursor-pointer non-selectable" ref="helpMenu">
-          <span class="q-menu-open-button">Help</span>
-          <q-menu transition-show="jump-down" transition-hide="jump-up">
-            <q-list dense style="min-width: 100px">
-              <q-item clickable v-close-popup href="https://github.com/theSKAILab/TeAM-NER/issues" target="_blank">
-                Report Issue
-              </q-item>
-              <q-item clickable v-close-popup @click="showAbout = true">
-                <q-item-section>About</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
+          <!-- Help -->
+          <div class="q-ml-md cursor-pointer non-selectable" ref="helpMenu">
+            <span class="q-menu-open-button">Help</span>
+            <q-menu transition-show="jump-down" transition-hide="jump-up">
+              <q-list dense style="min-width: 100px">
+                <q-item clickable v-close-popup href="https://github.com/theSKAILab/TeAM-NER/issues" target="_blank">
+                  Report Issue
+                </q-item>
+                <q-item clickable v-close-popup @click="showAbout = true">
+                  <q-item-section>About</q-item-section>
+                </q-item>
+              </q-list>
+            </q-menu>
 
-          <about-dialog :show="showAbout" @hide="showAbout = false" />
-        </div>
+            <about-dialog :show="showAbout" @hide="showAbout = false" />
+          </div>
+        </span>
 
-        <q-space />
+        <!-- Program / Mode -->
+        <span class="col" style="text-align: center;" v-if="this.$store.state.currentPage != 'start'">
+          <span>{{ this.$store.fileName? this.$store.fileName + " - ": this.$store.currentPage }} </span>
+          <span style="font-weight: bold;">{{ this.$store.state.currentPage.charAt(0).toUpperCase() + this.$store.state.currentPage.slice(1) }} Mode</span>
+        </span>
 
-        <div class="q-ml-md q-mr-lg cursor-pointer non-selectable" v-if="installablePWA">
-          <span class="q-menu-open-button" @click="deferredPrompt.prompt()">
-                Install Application
-          </span>
-        </div>
+        <!-- Rightmost Buttons -->
+        <span class="col" style="text-align: right;">
+          <div class="q-ml-md q-mr-lg cursor-pointer non-selectable" v-if="installablePWA">
+            <span class="q-menu-open-button" @click="deferredPrompt.prompt()">
+                  Install Application
+            </span>
+          </div>
 
-        <!-- Theme Mode Switch -->
-        <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
+          <!-- Theme Mode Switch -->
+          <q-icon style="margin-top: 5px" color="white" :name="$q.dark.isActive ? 'fas fa-sun' : 'fas fa-moon'" class="cursor-pointer" @click="toggleDarkMode" />
+        </span>
+      
       </div>
   </q-header>
 
@@ -139,7 +150,7 @@ export default {
     })
   },
   computed: {
-    ...mapState(["annotations", "classes","fileName","lastSavedTimestamp"]),
+    ...mapState(["annotations", "classes","fileName","lastSavedTimestamp","currentPage"]),
   },
   mixins: [ExportAnnotations],
   methods: {
