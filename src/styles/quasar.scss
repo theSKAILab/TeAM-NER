@@ -103,3 +103,7 @@ body.body--dark {
 .titlebar-button:hover {
   background: #5bbec3;
 }
+
+span.col > div {
+  display: inline-block;
+}

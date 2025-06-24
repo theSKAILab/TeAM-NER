@@ -52,15 +52,17 @@ export default {
       "currentIndex",
       "inputSentences",
       "annotationPrecision",
-      "lastSavedTimestamp",
       "undoStack"
     ]),
+    // TODO: THIS SHOULD BE REWRITTEN BETTER
     eligibleTokens() {
       var renderedList = [];
       for (let i = 0; i < this.tm.tokens.length; i++) {
         let t = this.tm.tokens[i];
         let tokenOverlapping = this.tm.isOverlapping(t.start, t.end);
         if (!tokenOverlapping) {
+          renderedList.push(t);
+        } else if (t.currentState == 'Rejected' && tokenOverlapping != null && t == tokenOverlapping[0]) {
           renderedList.push(t);
         } else if (t.currentState != 'Rejected' && tokenOverlapping != null) {
           renderedList.push(t);

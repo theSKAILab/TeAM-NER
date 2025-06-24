@@ -72,6 +72,7 @@ export default {
       const content = JSON.stringify(output, null, 2); // Pretty print JSON
       try {
         // file saving logic
+        this.$store.lastSavedTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         if (typeof window.rpc === "undefined") {
           let element = document.createElement("a");
           element.setAttribute(
