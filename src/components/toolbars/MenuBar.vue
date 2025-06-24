@@ -104,7 +104,7 @@
   </q-header>
 
   <open-dialog :show="pendingOpen != null" @hide="pendingOpen = null" @confirm="pendingOpen.click()" />
-  <exit-dialog :show="pendingClose != null" @hide="pendingClose = null" @confirm="() => {this.setCurrentPage('start')}" />
+  <exit-dialog :show="pendingClose != null" @hide="pendingClose = null" @confirm="() => {this.reloadWindow()}" />
 </template>
 
 <script>
@@ -209,6 +209,9 @@ export default {
 
       // Annotator Menu Binds
       if (e.key == "m" && e.ctrlKey && isValid) {this.$store.state.currentPage == 'annotate'? this.setCurrentPage('review'): this.setCurrentPage('annotate')}
+    },
+    reloadWindow() {
+      window.location.reload();
     }
   },
 };
