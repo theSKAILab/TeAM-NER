@@ -111,7 +111,7 @@ export default {
         this.addUndoOverlapping({"oldBlocks": existingBlocks, "newBlockStart": start});
         this.tm.addNewBlock(start, end, this.currentClass, "Suggested", this.currentPage);
       } else {
-        this.tm.addNewBlock(start, end, this.currentClass, "Candidate", this.currentPage);
+        this.tm.addNewBlock(start, end, this.currentClass, this.currentPage == "annotate"? "Candidate": "Suggested", this.currentPage);
         if (this.tm.getBlockByStart(start)) this.addUndoCreate(this.tm.getBlockByStart(start));
       }
 
